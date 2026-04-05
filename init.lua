@@ -1,196 +1,188 @@
 -- VortexLibrary v2.0
 local VortexLibrary = {}
+VortexLibrary._listeners = {}
+VortexLibrary.CurrentTheme = "Dark"
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local Themes = {
-	Dark = {Background = Color3.fromRGB(30,30,30), TitleBar = Color3.fromRGB(20,20,20), TabInactive = Color3.fromRGB(40,40,40), TabActive = Color3.fromRGB(60,60,60), Content = Color3.fromRGB(25,25,25), Element = Color3.fromRGB(45,45,45), ElementHover = Color3.fromRGB(55,55,55), TextMain = Color3.fromRGB(255,255,255), TextSub = Color3.fromRGB(200,200,200), Accent = Color3.fromRGB(100,100,255), ToggleOff = Color3.fromRGB(60,60,60), ScrollBar = Color3.fromRGB(60,60,60)},
-	Aqua = {Background = Color3.fromRGB(15,35,45), TitleBar = Color3.fromRGB(10,25,35), TabInactive = Color3.fromRGB(20,45,60), TabActive = Color3.fromRGB(30,65,85), Content = Color3.fromRGB(18,40,50), Element = Color3.fromRGB(25,55,70), ElementHover = Color3.fromRGB(35,75,95), TextMain = Color3.fromRGB(200,240,255), TextSub = Color3.fromRGB(150,200,220), Accent = Color3.fromRGB(0,200,255), ToggleOff = Color3.fromRGB(30,60,75), ScrollBar = Color3.fromRGB(40,80,100)},
-	Purple = {Background = Color3.fromRGB(35,20,45), TitleBar = Color3.fromRGB(25,15,35), TabInactive = Color3.fromRGB(50,30,65), TabActive = Color3.fromRGB(70,45,90), Content = Color3.fromRGB(40,25,50), Element = Color3.fromRGB(60,40,75), ElementHover = Color3.fromRGB(80,55,100), TextMain = Color3.fromRGB(240,220,255), TextSub = Color3.fromRGB(200,180,220), Accent = Color3.fromRGB(180,100,255), ToggleOff = Color3.fromRGB(60,45,75), ScrollBar = Color3.fromRGB(80,60,100)},
-	Midnight = {Background = Color3.fromRGB(10,10,20), TitleBar = Color3.fromRGB(5,5,15), TabInactive = Color3.fromRGB(15,15,30), TabActive = Color3.fromRGB(25,25,45), Content = Color3.fromRGB(12,12,22), Element = Color3.fromRGB(20,20,35), ElementHover = Color3.fromRGB(30,30,50), TextMain = Color3.fromRGB(220,220,240), TextSub = Color3.fromRGB(160,160,180), Accent = Color3.fromRGB(100,150,255), ToggleOff = Color3.fromRGB(30,30,45), ScrollBar = Color3.fromRGB(40,40,60)},
-	Light = {Background = Color3.fromRGB(240,240,240), TitleBar = Color3.fromRGB(220,220,220), TabInactive = Color3.fromRGB(200,200,200), TabActive = Color3.fromRGB(180,180,180), Content = Color3.fromRGB(230,230,230), Element = Color3.fromRGB(210,210,210), ElementHover = Color3.fromRGB(190,190,190), TextMain = Color3.fromRGB(20,20,20), TextSub = Color3.fromRGB(60,60,60), Accent = Color3.fromRGB(70,130,255), ToggleOff = Color3.fromRGB(160,160,160), ScrollBar = Color3.fromRGB(180,180,180)}
+	Dark = {Background=Color3.fromRGB(30,30,30),TitleBar=Color3.fromRGB(20,20,20),TabInactive=Color3.fromRGB(40,40,40),TabActive=Color3.fromRGB(60,60,60),Content=Color3.fromRGB(25,25,25),Element=Color3.fromRGB(45,45,45),ElementHover=Color3.fromRGB(55,55,55),TextMain=Color3.fromRGB(255,255,255),TextSub=Color3.fromRGB(200,200,200),Accent=Color3.fromRGB(100,100,255),ToggleOff=Color3.fromRGB(60,60,60),ScrollBar=Color3.fromRGB(60,60,60)},
+	Aqua = {Background=Color3.fromRGB(15,35,45),TitleBar=Color3.fromRGB(10,25,35),TabInactive=Color3.fromRGB(20,45,60),TabActive=Color3.fromRGB(30,65,85),Content=Color3.fromRGB(18,40,50),Element=Color3.fromRGB(25,55,70),ElementHover=Color3.fromRGB(35,75,95),TextMain=Color3.fromRGB(200,240,255),TextSub=Color3.fromRGB(150,200,220),Accent=Color3.fromRGB(0,200,255),ToggleOff=Color3.fromRGB(30,60,75),ScrollBar=Color3.fromRGB(40,80,100)},
+	Purple = {Background=Color3.fromRGB(35,20,45),TitleBar=Color3.fromRGB(25,15,35),TabInactive=Color3.fromRGB(50,30,65),TabActive=Color3.fromRGB(70,45,90),Content=Color3.fromRGB(40,25,50),Element=Color3.fromRGB(60,40,75),ElementHover=Color3.fromRGB(80,55,100),TextMain=Color3.fromRGB(240,220,255),TextSub=Color3.fromRGB(200,180,220),Accent=Color3.fromRGB(180,100,255),ToggleOff=Color3.fromRGB(60,45,75),ScrollBar=Color3.fromRGB(80,60,100)},
+	Midnight = {Background=Color3.fromRGB(10,10,20),TitleBar=Color3.fromRGB(5,5,15),TabInactive=Color3.fromRGB(15,15,30),TabActive=Color3.fromRGB(25,25,45),Content=Color3.fromRGB(12,12,22),Element=Color3.fromRGB(20,20,35),ElementHover=Color3.fromRGB(30,30,50),TextMain=Color3.fromRGB(220,220,240),TextSub=Color3.fromRGB(160,160,180),Accent=Color3.fromRGB(100,150,255),ToggleOff=Color3.fromRGB(30,30,45),ScrollBar=Color3.fromRGB(40,40,60)},
+	Light = {Background=Color3.fromRGB(240,240,240),TitleBar=Color3.fromRGB(220,220,220),TabInactive=Color3.fromRGB(200,200,200),TabActive=Color3.fromRGB(180,180,180),Content=Color3.fromRGB(230,230,230),Element=Color3.fromRGB(210,210,210),ElementHover=Color3.fromRGB(190,190,190),TextMain=Color3.fromRGB(20,20,20),TextSub=Color3.fromRGB(60,60,60),Accent=Color3.fromRGB(70,130,255),ToggleOff=Color3.fromRGB(160,160,160),ScrollBar=Color3.fromRGB(180,180,180)}
 }
-VortexLibrary.CurrentTheme = "Dark"
-VortexLibrary.ThemeListeners = {}
-VortexLibrary.NotificationQueue = {}
-VortexLibrary.Windows = {}
-local TI_Default = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local TI_Fast = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local TI_Back = TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-function VortexLibrary:SetTheme(themeName)
-	if not Themes[themeName] then return end
-	self.CurrentTheme = themeName
-	for _, listener in pairs(self.ThemeListeners) do
-		pcall(function() listener(Themes[themeName]) end)
+function VortexLibrary:SetTheme(name)
+	if not Themes[name] then return end
+	self.CurrentTheme = name
+	for _,listener in pairs(self._listeners) do
+		pcall(function() listener(Themes[name]) end)
 	end
 end
-function VortexLibrary:Notify(title, message, duration, notifType)
+function VortexLibrary:Notify(title,message,duration,notifType)
 	duration = duration or 3
 	notifType = notifType or "Info"
-	local typeColors = {Info = Color3.fromRGB(100,150,255), Success = Color3.fromRGB(50,200,100), Warning = Color3.fromRGB(255,180,50), Error = Color3.fromRGB(255,80,80)}
-	local accentColor = typeColors[notifType] or typeColors.Info
-	local theme = Themes[self.CurrentTheme]
+	local typeColors = {Info=Color3.fromRGB(100,150,255),Success=Color3.fromRGB(50,200,100),Warning=Color3.fromRGB(255,180,50),Error=Color3.fromRGB(255,80,80)}
+	local color = typeColors[notifType] or typeColors.Info
 	pcall(function()
 		local sg = Instance.new("ScreenGui")
 		sg.Name = "VortexNotif"
+		sg.DisplayOrder = 999
 		sg.ResetOnSpawn = false
 		sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 		sg.Parent = CoreGui
+		local existing = 0
+		for _,v in pairs(CoreGui:GetChildren()) do
+			if v.Name == "VortexNotif" and v ~= sg then existing = existing + 1 end
+		end
 		local card = Instance.new("Frame")
-		card.Size = UDim2.new(0,300,0,80)
-		card.Position = UDim2.new(1,320,1,-100-(#self.NotificationQueue*90))
-		card.BackgroundColor3 = theme.Element
+		card.Size = UDim2.new(0,280,0,70)
+		card.Position = UDim2.new(1,10,1,-80-(existing*80))
+		card.BackgroundColor3 = Themes[VortexLibrary.CurrentTheme].Element
 		card.BorderSizePixel = 0
 		card.Parent = sg
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(0,6)
-		corner.Parent = card
-		local stripe = Instance.new("Frame")
-		stripe.Size = UDim2.new(0,4,1,0)
-		stripe.BackgroundColor3 = accentColor
-		stripe.BorderSizePixel = 0
-		stripe.Parent = card
+		Instance.new("UICorner",card).CornerRadius = UDim.new(0,6)
+		local border = Instance.new("Frame")
+		border.Size = UDim2.new(0,4,1,0)
+		border.BackgroundColor3 = color
+		border.BorderSizePixel = 0
+		border.Parent = card
+		Instance.new("UICorner",border).CornerRadius = UDim.new(0,6)
 		local titleLbl = Instance.new("TextLabel")
-		titleLbl.Size = UDim2.new(1,-20,0,20)
-		titleLbl.Position = UDim2.new(0,10,0,8)
+		titleLbl.Size = UDim2.new(1,-15,0,18)
+		titleLbl.Position = UDim2.new(0,10,0,6)
 		titleLbl.BackgroundTransparency = 1
 		titleLbl.Text = title
-		titleLbl.TextColor3 = theme.TextMain
-		titleLbl.TextSize = 14
+		titleLbl.TextColor3 = Themes[VortexLibrary.CurrentTheme].TextMain
+		titleLbl.TextSize = 13
 		titleLbl.Font = Enum.Font.GothamBold
 		titleLbl.TextXAlignment = Enum.TextXAlignment.Left
 		titleLbl.Parent = card
 		local msgLbl = Instance.new("TextLabel")
-		msgLbl.Size = UDim2.new(1,-20,0,30)
-		msgLbl.Position = UDim2.new(0,10,0,28)
+		msgLbl.Size = UDim2.new(1,-15,0,26)
+		msgLbl.Position = UDim2.new(0,10,0,24)
 		msgLbl.BackgroundTransparency = 1
 		msgLbl.Text = message
-		msgLbl.TextColor3 = theme.TextSub
-		msgLbl.TextSize = 12
+		msgLbl.TextColor3 = Themes[VortexLibrary.CurrentTheme].TextSub
+		msgLbl.TextSize = 11
 		msgLbl.Font = Enum.Font.Gotham
 		msgLbl.TextXAlignment = Enum.TextXAlignment.Left
 		msgLbl.TextYAlignment = Enum.TextYAlignment.Top
 		msgLbl.TextWrapped = true
 		msgLbl.Parent = card
 		local progBg = Instance.new("Frame")
-		progBg.Size = UDim2.new(1,-20,0,3)
-		progBg.Position = UDim2.new(0,10,1,-10)
-		progBg.BackgroundColor3 = Color3.fromRGB(50,50,50)
+		progBg.Size = UDim2.new(1,-16,0,3)
+		progBg.Position = UDim2.new(0,8,1,-8)
+		progBg.BackgroundColor3 = Color3.fromRGB(40,40,40)
 		progBg.BorderSizePixel = 0
 		progBg.Parent = card
-		local progCorner = Instance.new("UICorner")
-		progCorner.CornerRadius = UDim.new(1,0)
-		progCorner.Parent = progBg
+		Instance.new("UICorner",progBg).CornerRadius = UDim.new(1,0)
 		local progBar = Instance.new("Frame")
 		progBar.Size = UDim2.new(0,0,1,0)
-		progBar.BackgroundColor3 = accentColor
+		progBar.BackgroundColor3 = color
 		progBar.BorderSizePixel = 0
 		progBar.Parent = progBg
-		local progBarCorner = Instance.new("UICorner")
-		progBarCorner.CornerRadius = UDim.new(1,0)
-		progBarCorner.Parent = progBar
-		table.insert(self.NotificationQueue, card)
-		TweenService:Create(card, TI_Fast, {Position = UDim2.new(1,-310,1,-100-(#self.NotificationQueue*90))}):Play()
-		TweenService:Create(progBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(1,0,1,0)}):Play()
-		task.delay(duration, function()
-			TweenService:Create(card, TI_Fast, {Position = UDim2.new(1,320,card.Position.Y.Scale,card.Position.Y.Offset)}):Play()
-			task.wait(0.2)
+		Instance.new("UICorner",progBar).CornerRadius = UDim.new(1,0)
+		TweenService:Create(card,TweenInfo.new(0.3,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Position=UDim2.new(1,-290,1,-80-(existing*80))}):Play()
+		TweenService:Create(progBar,TweenInfo.new(duration,Enum.EasingStyle.Linear),{Size=UDim2.new(1,0,1,0)}):Play()
+		task.delay(duration,function()
+			TweenService:Create(card,TweenInfo.new(0.3,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Position=UDim2.new(1,10,card.Position.Y.Scale,card.Position.Y.Offset)}):Play()
+			task.wait(0.3)
 			sg:Destroy()
-			for i,v in pairs(self.NotificationQueue) do if v == card then table.remove(self.NotificationQueue, i) break end end
 		end)
 	end)
 end
 function VortexLibrary:CreateDebugTab(windowObj)
-	local debugTab = windowObj:CreateTab("🔧 Debug")
-	local errorFrame = Instance.new("Frame")
-	errorFrame.Size = UDim2.new(1,-10,0,100)
-	errorFrame.BackgroundColor3 = Themes[self.CurrentTheme].Element
-	errorFrame.BorderSizePixel = 0
-	errorFrame.Parent = debugTab.ScrollFrame
-	local errorCorner = Instance.new("UICorner")
-	errorCorner.CornerRadius = UDim.new(0,4)
-	errorCorner.Parent = errorFrame
-	local errorScroll = Instance.new("ScrollingFrame")
-	errorScroll.Size = UDim2.new(1,-10,1,-10)
-	errorScroll.Position = UDim2.new(0,5,0,5)
-	errorScroll.BackgroundTransparency = 1
-	errorScroll.BorderSizePixel = 0
-	errorScroll.ScrollBarThickness = 3
-	errorScroll.Parent = errorFrame
-	local errorLayout = Instance.new("UIListLayout")
-	errorLayout.Padding = UDim.new(0,2)
-	errorLayout.Parent = errorScroll
-	errorLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		errorScroll.CanvasSize = UDim2.new(0,0,0,errorLayout.AbsoluteContentSize.Y+5)
-	end)
-	debugTab._logError = function(msg)
-		local lbl = Instance.new("TextLabel")
-		lbl.Size = UDim2.new(1,-5,0,20)
-		lbl.BackgroundTransparency = 1
-		lbl.Text = "[HATA] "..msg
-		lbl.TextColor3 = Color3.fromRGB(255,80,80)
-		lbl.TextSize = 11
-		lbl.Font = Enum.Font.Code
-		lbl.TextXAlignment = Enum.TextXAlignment.Left
-		lbl.TextWrapped = true
-		lbl.Parent = errorScroll
-	end
-	debugTab:CreateSection("Sistem Bilgisi")
-	debugTab:CreateButton("📊 Sistem Bilgisi", function()
+	local tab = windowObj:CreateTab("🔧 Debug")
+	tab:CreateSection("Sistem Testleri")
+	tab:CreateButton("📊 Sistem Raporu",function()
 		local player = Players.LocalPlayer
-		local char = player.Character
-		local hum = char and char:FindFirstChild("Humanoid")
-		print("=== SİSTEM BİLGİSİ ===")
-		print("Oyuncu:", player.Name)
-		print("UserId:", player.UserId)
-		print("Memory:", math.floor(collectgarbage("count")).." KB")
-		if hum then
-			print("WalkSpeed:", hum.WalkSpeed)
-			print("JumpPower:", hum.JumpPower)
-		end
+		print("=== SİSTEM RAPORU ===")
+		print("Oyuncu:",player.Name)
+		print("UserId:",player.UserId)
+		print("Memory:",math.floor(collectgarbage("count")).." KB")
 		local fps = 0
-		local lastTime = tick()
+		local lastTick = tick()
 		local conn
 		conn = RunService.Heartbeat:Connect(function()
-			fps = math.floor(1/(tick()-lastTime))
-			lastTime = tick()
+			fps = math.floor(1/(tick()-lastTick))
+			lastTick = tick()
 			conn:Disconnect()
-			print("FPS:", fps)
+			print("FPS:",fps)
+		end)
+		local pingSuccess,pingVal = pcall(function() return player:GetNetworkPing()*1000 end)
+		print("Ping:",pingSuccess and math.floor(pingVal).." ms" or "N/A")
+		if player.Character then
+			local hum = player.Character:FindFirstChild("Humanoid")
+			if hum then
+				print("WalkSpeed:",hum.WalkSpeed)
+				print("JumpPower:",hum.JumpPower)
+				print("Health:",math.floor(hum.Health).."/"..math.floor(hum.MaxHealth))
+			end
+			local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then print("Position:",tostring(hrp.Position)) end
+		end
+	end)
+	tab:CreateButton("🔔 4 Tip Bildirim Test",function()
+		task.spawn(function()
+			VortexLibrary:Notify("Bilgi","Bu bir Info bildirimi",2,"Info")
+			task.wait(0.5)
+			VortexLibrary:Notify("Başarılı","Bu bir Success bildirimi",2,"Success")
+			task.wait(0.5)
+			VortexLibrary:Notify("Uyarı","Bu bir Warning bildirimi",2,"Warning")
+			task.wait(0.5)
+			VortexLibrary:Notify("Hata","Bu bir Error bildirimi",2,"Error")
 		end)
 	end)
-	debugTab:CreateButton("🧹 GUI Temizle", function()
-		for _,v in pairs(CoreGui:GetChildren()) do
-			if v.Name == "VortexLibrary" or v.Name == "UILibrary" or v.Name == "VortexWindow" then
-				v:Destroy()
+	tab:CreateButton("🌈 Tema Turu",function()
+		task.spawn(function()
+			local themes = {"Dark","Aqua","Purple","Midnight","Light","Dark"}
+			for _,t in ipairs(themes) do
+				VortexLibrary:SetTheme(t)
+				task.wait(1.5)
 			end
-		end
-		VortexLibrary:Notify("Temizlendi", "Tüm GUI'ler silindi", 2, "Success")
+		end)
 	end)
-	debugTab:CreateButton("📢 Notify Test", function()
-		VortexLibrary:Notify("Bilgi", "Bu bir Info bildirimi", 2, "Info")
-		task.wait(0.5)
-		VortexLibrary:Notify("Başarılı", "Bu bir Success bildirimi", 2, "Success")
-		task.wait(0.5)
-		VortexLibrary:Notify("Uyarı", "Bu bir Warning bildirimi", 2, "Warning")
-		task.wait(0.5)
-		VortexLibrary:Notify("Hata", "Bu bir Error bildirimi", 2, "Error")
-	end)
-	debugTab:CreateButton("🌐 Tema Turu", function()
-		local themes = {"Dark","Aqua","Purple","Midnight","Light"}
-		for _,t in ipairs(themes) do
-			VortexLibrary:SetTheme(t)
-			VortexLibrary:Notify("Tema", t.." teması uygulandı", 1.5, "Info")
-			task.wait(1.5)
+	tab:CreateButton("🗑️ GUI Temizle",function()
+		for _,v in pairs(CoreGui:GetChildren()) do
+			if v.Name == "UILibrary" then v:Destroy() end
 		end
-		VortexLibrary:SetTheme("Dark")
+		VortexLibrary:Notify("Temizlendi","Tüm GUI'ler silindi",2,"Success")
+	end)
+	tab:CreateButton("⚡ FPS Test (3s)",function()
+		task.spawn(function()
+			local frames = 0
+			local startTime = tick()
+			local conn
+			conn = RunService.Heartbeat:Connect(function()
+				frames = frames + 1
+				if tick()-startTime >= 3 then
+					conn:Disconnect()
+					local avgFps = math.floor(frames/3)
+					print("Ortalama FPS (3s):",avgFps)
+					VortexLibrary:Notify("FPS Test","Ortalama: "..avgFps.." FPS",3,"Info")
+				end
+			end)
+		end)
+	end)
+	tab:CreateButton("🔍 Karakter Parçaları",function()
+		local player = Players.LocalPlayer
+		if player.Character then
+			print("=== KARAKTER PARÇALARI ===")
+			for _,v in pairs(player.Character:GetChildren()) do
+				print("["..v.ClassName.."]",v.Name)
+			end
+		else
+			print("Karakter bulunamadı")
+		end
 	end)
 end
-function VortexLibrary:CreateWindow(title, size)
+function VortexLibrary:CreateWindow(title,size)
 	local theme = Themes[self.CurrentTheme]
 	local sg = Instance.new("ScreenGui")
-	sg.Name = "VortexLibrary"
+	sg.Name = "UILibrary"
 	sg.ResetOnSpawn = false
 	sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	local win = Instance.new("Frame")
@@ -198,12 +190,9 @@ function VortexLibrary:CreateWindow(title, size)
 	win.Size = UDim2.new(0,0,0,0)
 	win.Position = UDim2.new(0.5,-250,0.5,-200)
 	win.BackgroundColor3 = theme.Background
-	win.BackgroundTransparency = 1
 	win.BorderSizePixel = 0
 	win.Parent = sg
-	local winCorner = Instance.new("UICorner")
-	winCorner.CornerRadius = UDim.new(0,6)
-	winCorner.Parent = win
+	Instance.new("UICorner",win).CornerRadius = UDim.new(0,6)
 	local titleBar = Instance.new("Frame")
 	titleBar.Name = "TitleBar"
 	titleBar.Size = UDim2.new(1,0,0,30)
@@ -211,8 +200,7 @@ function VortexLibrary:CreateWindow(title, size)
 	titleBar.BorderSizePixel = 0
 	titleBar.Parent = win
 	local titleLbl = Instance.new("TextLabel")
-	titleLbl.Name = "Title"
-	titleLbl.Size = UDim2.new(1,-100,1,0)
+	titleLbl.Size = UDim2.new(1,-80,1,0)
 	titleLbl.Position = UDim2.new(0,10,0,0)
 	titleLbl.BackgroundTransparency = 1
 	titleLbl.Text = title or "Vortex Library"
@@ -222,54 +210,39 @@ function VortexLibrary:CreateWindow(title, size)
 	titleLbl.TextXAlignment = Enum.TextXAlignment.Left
 	titleLbl.Parent = titleBar
 	local closeBtn = Instance.new("TextButton")
-	closeBtn.Size = UDim2.new(0,25,0,25)
-	closeBtn.Position = UDim2.new(1,-30,0,2.5)
+	closeBtn.Size = UDim2.new(0,22,0,22)
+	closeBtn.Position = UDim2.new(1,-26,0,4)
 	closeBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
 	closeBtn.BorderSizePixel = 0
 	closeBtn.Text = "✕"
 	closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-	closeBtn.TextSize = 14
+	closeBtn.TextSize = 12
 	closeBtn.Font = Enum.Font.GothamBold
 	closeBtn.Parent = titleBar
-	local closeBtnCorner = Instance.new("UICorner")
-	closeBtnCorner.CornerRadius = UDim.new(0,4)
-	closeBtnCorner.Parent = closeBtn
-	closeBtn.MouseButton1Click:Connect(function()
-		TweenService:Create(win, TI_Back, {Size = UDim2.new(0,0,0,0), BackgroundTransparency = 1}):Play()
-		task.wait(0.4)
-		sg:Destroy()
-	end)
-	local minimized = false
-	local originalSize = size or UDim2.new(0,500,0,400)
+	Instance.new("UICorner",closeBtn).CornerRadius = UDim.new(1,0)
 	local minBtn = Instance.new("TextButton")
-	minBtn.Size = UDim2.new(0,25,0,25)
-	minBtn.Position = UDim2.new(1,-60,0,2.5)
+	minBtn.Size = UDim2.new(0,22,0,22)
+	minBtn.Position = UDim2.new(1,-52,0,4)
 	minBtn.BackgroundColor3 = Color3.fromRGB(200,150,50)
 	minBtn.BorderSizePixel = 0
 	minBtn.Text = "–"
 	minBtn.TextColor3 = Color3.fromRGB(255,255,255)
-	minBtn.TextSize = 14
+	minBtn.TextSize = 12
 	minBtn.Font = Enum.Font.GothamBold
 	minBtn.Parent = titleBar
-	local minBtnCorner = Instance.new("UICorner")
-	minBtnCorner.CornerRadius = UDim.new(0,4)
-	minBtnCorner.Parent = minBtn
-	local fullscreen = false
+	Instance.new("UICorner",minBtn).CornerRadius = UDim.new(1,0)
 	local maxBtn = Instance.new("TextButton")
-	maxBtn.Size = UDim2.new(0,25,0,25)
-	maxBtn.Position = UDim2.new(1,-90,0,2.5)
-	maxBtn.BackgroundColor3 = Color3.fromRGB(50,150,200)
+	maxBtn.Size = UDim2.new(0,22,0,22)
+	maxBtn.Position = UDim2.new(1,-78,0,4)
+	maxBtn.BackgroundColor3 = Color3.fromRGB(50,200,100)
 	maxBtn.BorderSizePixel = 0
 	maxBtn.Text = "⊡"
 	maxBtn.TextColor3 = Color3.fromRGB(255,255,255)
-	maxBtn.TextSize = 14
+	maxBtn.TextSize = 12
 	maxBtn.Font = Enum.Font.GothamBold
 	maxBtn.Parent = titleBar
-	local maxBtnCorner = Instance.new("UICorner")
-	maxBtnCorner.CornerRadius = UDim.new(0,4)
-	maxBtnCorner.Parent = maxBtn
+	Instance.new("UICorner",maxBtn).CornerRadius = UDim.new(1,0)
 	local tabContainer = Instance.new("Frame")
-	tabContainer.Name = "TabContainer"
 	tabContainer.Size = UDim2.new(1,-10,0,30)
 	tabContainer.Position = UDim2.new(0,5,0,35)
 	tabContainer.BackgroundTransparency = 1
@@ -279,16 +252,13 @@ function VortexLibrary:CreateWindow(title, size)
 	tabLayout.Padding = UDim.new(0,5)
 	tabLayout.Parent = tabContainer
 	local contentContainer = Instance.new("Frame")
-	contentContainer.Name = "ContentContainer"
 	contentContainer.Size = UDim2.new(1,-10,1,-75)
 	contentContainer.Position = UDim2.new(0,5,0,70)
 	contentContainer.BackgroundColor3 = theme.Content
 	contentContainer.BorderSizePixel = 0
 	contentContainer.Parent = win
-	local contentCorner = Instance.new("UICorner")
-	contentCorner.CornerRadius = UDim.new(0,4)
-	contentCorner.Parent = contentContainer
-	local dragging, dragInput, mousePos, framePos = false, nil, nil, nil
+	Instance.new("UICorner",contentContainer).CornerRadius = UDim.new(0,4)
+	local dragging,dragInput,mousePos,framePos = false,nil,nil,nil
 	titleBar.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging = true
@@ -307,52 +277,54 @@ function VortexLibrary:CreateWindow(title, size)
 			local delta = input.Position - mousePos
 			local vpSize = workspace.CurrentCamera.ViewportSize
 			local winSize = win.AbsoluteSize
-			local clampedX = math.clamp(framePos.X.Offset + delta.X, 0, vpSize.X - winSize.X)
-			local clampedY = math.clamp(framePos.Y.Offset + delta.Y, 0, vpSize.Y - winSize.Y)
-			win.Position = UDim2.new(0, clampedX, 0, clampedY)
+			local clampedX = math.clamp(framePos.X.Offset+delta.X,0,vpSize.X-winSize.X)
+			local clampedY = math.clamp(framePos.Y.Offset+delta.Y,0,vpSize.Y-winSize.Y)
+			win.Position = UDim2.new(0,clampedX,0,clampedY)
 		end
+	end)
+	local originalSize = size or UDim2.new(0,500,0,400)
+	local originalPos = UDim2.new(0.5,-250,0.5,-200)
+	local minimized = false
+	local maximized = false
+	closeBtn.MouseButton1Click:Connect(function()
+		TweenService:Create(win,TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.In),{Size=UDim2.new(0,0,0,0)}):Play()
+		task.wait(0.4)
+		sg:Destroy()
 	end)
 	minBtn.MouseButton1Click:Connect(function()
 		minimized = not minimized
 		if minimized then
-			TweenService:Create(win, TI_Default, {Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset, 0, 30)}):Play()
+			TweenService:Create(win,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new(originalSize.X.Scale,originalSize.X.Offset,0,30)}):Play()
 			tabContainer.Visible = false
 			contentContainer.Visible = false
 		else
-			TweenService:Create(win, TI_Default, {Size = originalSize}):Play()
+			TweenService:Create(win,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=originalSize}):Play()
 			tabContainer.Visible = true
 			contentContainer.Visible = true
 		end
 	end)
 	maxBtn.MouseButton1Click:Connect(function()
-		fullscreen = not fullscreen
-		if fullscreen then
+		maximized = not maximized
+		if maximized then
 			local vpSize = workspace.CurrentCamera.ViewportSize
-			TweenService:Create(win, TI_Default, {Size = UDim2.new(0, vpSize.X, 0, vpSize.Y), Position = UDim2.new(0,0,0,0)}):Play()
+			TweenService:Create(win,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new(1,0,1,0),Position=UDim2.new(0,0,0,0)}):Play()
 		else
-			TweenService:Create(win, TI_Default, {Size = originalSize, Position = UDim2.new(0.5, -originalSize.X.Offset/2, 0.5, -originalSize.Y.Offset/2)}):Play()
+			TweenService:Create(win,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=originalSize,Position=originalPos}):Play()
 		end
 	end)
 	sg.Parent = CoreGui
-	TweenService:Create(win, TI_Back, {Size = originalSize, BackgroundTransparency = 0}):Play()
+	TweenService:Create(win,TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=originalSize}):Play()
 	local winObj = {}
 	winObj.Tabs = {}
-	winObj.CurrentTab = nil
-	winObj.Window = win
-	winObj.TitleBar = titleBar
-	winObj.TitleLabel = titleLbl
-	winObj.ContentContainer = contentContainer
-	table.insert(VortexLibrary.Windows, winObj)
-	table.insert(VortexLibrary.ThemeListeners, function(t)
-		TweenService:Create(win, TI_Default, {BackgroundColor3 = t.Background}):Play()
-		TweenService:Create(titleBar, TI_Default, {BackgroundColor3 = t.TitleBar}):Play()
-		TweenService:Create(titleLbl, TI_Default, {TextColor3 = t.TextMain}):Play()
-		TweenService:Create(contentContainer, TI_Default, {BackgroundColor3 = t.Content}):Play()
+	table.insert(self._listeners,function(t)
+		TweenService:Create(win,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundColor3=t.Background}):Play()
+		TweenService:Create(titleBar,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundColor3=t.TitleBar}):Play()
+		TweenService:Create(titleLbl,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{TextColor3=t.TextMain}):Play()
+		TweenService:Create(contentContainer,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundColor3=t.Content}):Play()
 	end)
 	function winObj:CreateTab(name)
 		local theme = Themes[VortexLibrary.CurrentTheme]
 		local tabBtn = Instance.new("TextButton")
-		tabBtn.Name = name
 		tabBtn.Size = UDim2.new(0,100,1,0)
 		tabBtn.BackgroundColor3 = theme.TabInactive
 		tabBtn.BorderSizePixel = 0
@@ -361,11 +333,8 @@ function VortexLibrary:CreateWindow(title, size)
 		tabBtn.TextSize = 12
 		tabBtn.Font = Enum.Font.Gotham
 		tabBtn.Parent = tabContainer
-		local tabCorner = Instance.new("UICorner")
-		tabCorner.CornerRadius = UDim.new(0,4)
-		tabCorner.Parent = tabBtn
+		Instance.new("UICorner",tabBtn).CornerRadius = UDim.new(0,4)
 		local tabContent = Instance.new("Frame")
-		tabContent.Name = name.."Content"
 		tabContent.Size = UDim2.new(1,0,1,0)
 		tabContent.BackgroundTransparency = 1
 		tabContent.Visible = false
@@ -390,68 +359,55 @@ function VortexLibrary:CreateWindow(title, size)
 		tabObj.Content = tabContent
 		tabObj.ScrollFrame = scrollFrame
 		tabObj.Name = name
-		tabObj.LayoutOrder = 0
-		table.insert(VortexLibrary.ThemeListeners, function(t)
-			TweenService:Create(scrollFrame, TI_Default, {ScrollBarImageColor3 = t.ScrollBar}):Play()
-			if winObj.CurrentTab == tabObj then
-				TweenService:Create(tabBtn, TI_Default, {BackgroundColor3 = t.TabActive, TextColor3 = t.TextMain}):Play()
-			else
-				TweenService:Create(tabBtn, TI_Default, {BackgroundColor3 = t.TabInactive, TextColor3 = t.TextSub}):Play()
-			end
+		tabObj._order = 0
+		table.insert(VortexLibrary._listeners,function(t)
+			TweenService:Create(scrollFrame,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{ScrollBarImageColor3=t.ScrollBar}):Play()
 		end)
 		function tabObj:CreateSection(text)
-			tabObj.LayoutOrder = tabObj.LayoutOrder + 1
+			self._order = self._order + 1
 			local theme = Themes[VortexLibrary.CurrentTheme]
 			local section = Instance.new("Frame")
-			section.Size = UDim2.new(1,-10,0,25)
+			section.Size = UDim2.new(1,-10,0,22)
 			section.BackgroundTransparency = 1
-			section.LayoutOrder = tabObj.LayoutOrder
+			section.LayoutOrder = self._order
 			section.Parent = scrollFrame
 			local lbl = Instance.new("TextLabel")
-			lbl.Size = UDim2.new(1,0,0,20)
+			lbl.Size = UDim2.new(1,0,1,0)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = text
 			lbl.TextColor3 = theme.Accent
-			lbl.TextSize = 13
+			lbl.TextSize = 12
 			lbl.Font = Enum.Font.GothamBold
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
 			lbl.Parent = section
-			local line = Instance.new("Frame")
-			line.Size = UDim2.new(1,0,0,1)
-			line.Position = UDim2.new(0,0,1,-2)
-			line.BackgroundColor3 = theme.Accent
-			line.BorderSizePixel = 0
-			line.Parent = section
-			table.insert(VortexLibrary.ThemeListeners, function(t)
+			table.insert(VortexLibrary._listeners,function(t)
 				lbl.TextColor3 = t.Accent
-				line.BackgroundColor3 = t.Accent
 			end)
 			return section
 		end
 		function tabObj:CreateLabel(text)
-			tabObj.LayoutOrder = tabObj.LayoutOrder + 1
+			self._order = self._order + 1
 			local theme = Themes[VortexLibrary.CurrentTheme]
 			local lbl = Instance.new("TextLabel")
-			lbl.Size = UDim2.new(1,-10,0,25)
+			lbl.Size = UDim2.new(1,-10,0,20)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = text
 			lbl.TextColor3 = theme.TextSub
-			lbl.TextSize = 12
-			lbl.Font = Enum.Font.GothamItalic
+			lbl.TextSize = 11
+			lbl.Font = Enum.Font.Gotham
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
 			lbl.TextWrapped = true
-			lbl.LayoutOrder = tabObj.LayoutOrder
+			lbl.LayoutOrder = self._order
 			lbl.Parent = scrollFrame
-			table.insert(VortexLibrary.ThemeListeners, function(t)
+			table.insert(VortexLibrary._listeners,function(t)
 				lbl.TextColor3 = t.TextSub
 			end)
 			return lbl
 		end
-		function tabObj:CreateButton(text, callback)
-			tabObj.LayoutOrder = tabObj.LayoutOrder + 1
+		function tabObj:CreateButton(text,callback)
+			self._order = self._order + 1
 			local theme = Themes[VortexLibrary.CurrentTheme]
 			local btn = Instance.new("TextButton")
-			btn.Name = "Button"
 			btn.Size = UDim2.new(1,-10,0,35)
 			btn.BackgroundColor3 = theme.Element
 			btn.BorderSizePixel = 0
@@ -459,45 +415,37 @@ function VortexLibrary:CreateWindow(title, size)
 			btn.TextColor3 = theme.TextMain
 			btn.TextSize = 13
 			btn.Font = Enum.Font.Gotham
-			btn.LayoutOrder = tabObj.LayoutOrder
+			btn.LayoutOrder = self._order
 			btn.Parent = scrollFrame
-			local btnCorner = Instance.new("UICorner")
-			btnCorner.CornerRadius = UDim.new(0,4)
-			btnCorner.Parent = btn
+			Instance.new("UICorner",btn).CornerRadius = UDim.new(0,4)
 			btn.MouseEnter:Connect(function()
-				TweenService:Create(btn, TI_Fast, {BackgroundColor3 = theme.ElementHover}):Play()
+				TweenService:Create(btn,TweenInfo.new(0.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundColor3=theme.ElementHover}):Play()
 			end)
 			btn.MouseLeave:Connect(function()
-				TweenService:Create(btn, TI_Fast, {BackgroundColor3 = theme.Element}):Play()
+				TweenService:Create(btn,TweenInfo.new(0.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundColor3=theme.Element}):Play()
 			end)
 			btn.MouseButton1Click:Connect(function()
-				TweenService:Create(btn, TI_Fast, {BackgroundColor3 = theme.Accent}):Play()
-				task.wait(0.1)
-				TweenService:Create(btn, TI_Fast, {BackgroundColor3 = theme.Element}):Play()
 				if callback then pcall(callback) end
 			end)
-			table.insert(VortexLibrary.ThemeListeners, function(t)
+			table.insert(VortexLibrary._listeners,function(t)
 				btn.BackgroundColor3 = t.Element
 				btn.TextColor3 = t.TextMain
 			end)
 			return btn
 		end
-		function tabObj:CreateToggle(text, default, callback)
-			tabObj.LayoutOrder = tabObj.LayoutOrder + 1
+		function tabObj:CreateToggle(text,default,callback)
+			self._order = self._order + 1
 			local theme = Themes[VortexLibrary.CurrentTheme]
 			local toggled = default or false
-			local toggleFrame = Instance.new("Frame")
-			toggleFrame.Name = "Toggle"
-			toggleFrame.Size = UDim2.new(1,-10,0,35)
-			toggleFrame.BackgroundColor3 = theme.Element
-			toggleFrame.BorderSizePixel = 0
-			toggleFrame.LayoutOrder = tabObj.LayoutOrder
-			toggleFrame.Parent = scrollFrame
-			local toggleCorner = Instance.new("UICorner")
-			toggleCorner.CornerRadius = UDim.new(0,4)
-			toggleCorner.Parent = toggleFrame
+			local frame = Instance.new("Frame")
+			frame.Size = UDim2.new(1,-10,0,35)
+			frame.BackgroundColor3 = theme.Element
+			frame.BorderSizePixel = 0
+			frame.LayoutOrder = self._order
+			frame.Parent = scrollFrame
+			Instance.new("UICorner",frame).CornerRadius = UDim.new(0,4)
 			local lbl = Instance.new("TextLabel")
-			lbl.Size = UDim2.new(1,-60,1,0)
+			lbl.Size = UDim2.new(1,-50,1,0)
 			lbl.Position = UDim2.new(0,10,0,0)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = text or "Toggle"
@@ -505,195 +453,183 @@ function VortexLibrary:CreateWindow(title, size)
 			lbl.TextSize = 13
 			lbl.Font = Enum.Font.Gotham
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
-			lbl.Parent = toggleFrame
-			local switchBg = Instance.new("Frame")
-			switchBg.Size = UDim2.new(0,40,0,20)
-			switchBg.Position = UDim2.new(1,-50,0.5,-10)
-			switchBg.BackgroundColor3 = toggled and theme.Accent or theme.ToggleOff
-			switchBg.BorderSizePixel = 0
-			switchBg.Parent = toggleFrame
-			local switchCorner = Instance.new("UICorner")
-			switchCorner.CornerRadius = UDim.new(1,0)
-			switchCorner.Parent = switchBg
+			lbl.Parent = frame
+			local track = Instance.new("Frame")
+			track.Size = UDim2.new(0,38,0,20)
+			track.Position = UDim2.new(1,-44,0.5,-10)
+			track.BackgroundColor3 = toggled and theme.Accent or theme.ToggleOff
+			track.BorderSizePixel = 0
+			track.Parent = frame
+			Instance.new("UICorner",track).CornerRadius = UDim.new(1,0)
 			local knob = Instance.new("Frame")
-			knob.Size = UDim2.new(0,16,0,16)
-			knob.Position = toggled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)
+			knob.Size = UDim2.new(0,14,0,14)
+			knob.Position = toggled and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7)
 			knob.BackgroundColor3 = Color3.fromRGB(255,255,255)
 			knob.BorderSizePixel = 0
-			knob.Parent = switchBg
-			local knobCorner = Instance.new("UICorner")
-			knobCorner.CornerRadius = UDim.new(1,0)
-			knobCorner.Parent = knob
-			local toggleBtn = Instance.new("TextButton")
-			toggleBtn.Size = UDim2.new(1,0,1,0)
-			toggleBtn.BackgroundTransparency = 1
-			toggleBtn.Text = ""
-			toggleBtn.Parent = toggleFrame
-			local toggleObj = {Value = toggled}
+			knob.Parent = track
+			Instance.new("UICorner",knob).CornerRadius = UDim.new(1,0)
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(1,0,1,0)
+			btn.BackgroundTransparency = 1
+			btn.Text = ""
+			btn.Parent = frame
+			local toggleObj = {Value=toggled}
 			function toggleObj:Set(val)
 				toggled = val
 				self.Value = val
-				TweenService:Create(switchBg, TI_Default, {BackgroundColor3 = toggled and theme.Accent or theme.ToggleOff}):Play()
-				TweenService:Create(knob, TI_Default, {Position = toggled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}):Play()
+				TweenService:Create(track,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundColor3=toggled and theme.Accent or theme.ToggleOff}):Play()
+				TweenService:Create(knob,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Position=toggled and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7)}):Play()
 			end
-			toggleBtn.MouseButton1Click:Connect(function()
+			btn.MouseButton1Click:Connect(function()
 				toggled = not toggled
 				toggleObj.Value = toggled
-				TweenService:Create(switchBg, TI_Default, {BackgroundColor3 = toggled and theme.Accent or theme.ToggleOff}):Play()
-				TweenService:Create(knob, TI_Default, {Position = toggled and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)}):Play()
+				TweenService:Create(track,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundColor3=toggled and theme.Accent or theme.ToggleOff}):Play()
+				TweenService:Create(knob,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Position=toggled and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7)}):Play()
 				if callback then pcall(function() callback(toggled) end) end
 			end)
-			table.insert(VortexLibrary.ThemeListeners, function(t)
-				toggleFrame.BackgroundColor3 = t.Element
+			table.insert(VortexLibrary._listeners,function(t)
+				frame.BackgroundColor3 = t.Element
 				lbl.TextColor3 = t.TextMain
-				switchBg.BackgroundColor3 = toggled and t.Accent or t.ToggleOff
+				track.BackgroundColor3 = toggled and t.Accent or t.ToggleOff
 			end)
 			return toggleObj
 		end
-		function tabObj:CreateSlider(text, min, max, default, callback)
-			tabObj.LayoutOrder = tabObj.LayoutOrder + 1
+		function tabObj:CreateSlider(text,min,max,default,callback)
+			self._order = self._order + 1
 			local theme = Themes[VortexLibrary.CurrentTheme]
 			local value = default or min
-			local sliderFrame = Instance.new("Frame")
-			sliderFrame.Name = "Slider"
-			sliderFrame.Size = UDim2.new(1,-10,0,50)
-			sliderFrame.BackgroundColor3 = theme.Element
-			sliderFrame.BorderSizePixel = 0
-			sliderFrame.LayoutOrder = tabObj.LayoutOrder
-			sliderFrame.Parent = scrollFrame
-			local sliderCorner = Instance.new("UICorner")
-			sliderCorner.CornerRadius = UDim.new(0,4)
-			sliderCorner.Parent = sliderFrame
+			local frame = Instance.new("Frame")
+			frame.Size = UDim2.new(1,-10,0,55)
+			frame.BackgroundColor3 = theme.Element
+			frame.BorderSizePixel = 0
+			frame.LayoutOrder = self._order
+			frame.Parent = scrollFrame
+			Instance.new("UICorner",frame).CornerRadius = UDim.new(0,4)
 			local lbl = Instance.new("TextLabel")
-			lbl.Size = UDim2.new(0.7,0,0,20)
-			lbl.Position = UDim2.new(0,10,0,5)
+			lbl.Size = UDim2.new(0.7,0,0,18)
+			lbl.Position = UDim2.new(0,10,0,6)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = text or "Slider"
 			lbl.TextColor3 = theme.TextMain
-			lbl.TextSize = 13
+			lbl.TextSize = 12
 			lbl.Font = Enum.Font.Gotham
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
-			lbl.Parent = sliderFrame
+			lbl.Parent = frame
 			local valueLbl = Instance.new("TextLabel")
-			valueLbl.Size = UDim2.new(0.3,-10,0,20)
-			valueLbl.Position = UDim2.new(0.7,0,0,5)
+			valueLbl.Size = UDim2.new(0.3,-10,0,18)
+			valueLbl.Position = UDim2.new(0.7,0,0,6)
 			valueLbl.BackgroundTransparency = 1
 			valueLbl.Text = tostring(value)
 			valueLbl.TextColor3 = theme.Accent
-			valueLbl.TextSize = 13
+			valueLbl.TextSize = 12
 			valueLbl.Font = Enum.Font.GothamBold
 			valueLbl.TextXAlignment = Enum.TextXAlignment.Right
-			valueLbl.Parent = sliderFrame
-			local sliderBg = Instance.new("Frame")
-			sliderBg.Size = UDim2.new(1,-20,0,6)
-			sliderBg.Position = UDim2.new(0,10,1,-15)
-			sliderBg.BackgroundColor3 = Color3.fromRGB(50,50,50)
-			sliderBg.BorderSizePixel = 0
-			sliderBg.Parent = sliderFrame
-			local sliderBgCorner = Instance.new("UICorner")
-			sliderBgCorner.CornerRadius = UDim.new(1,0)
-			sliderBgCorner.Parent = sliderBg
-			local sliderFill = Instance.new("Frame")
-			sliderFill.Size = UDim2.new((value-min)/(max-min),0,1,0)
-			sliderFill.BackgroundColor3 = theme.Accent
-			sliderFill.BorderSizePixel = 0
-			sliderFill.Parent = sliderBg
-			local sliderFillCorner = Instance.new("UICorner")
-			sliderFillCorner.CornerRadius = UDim.new(1,0)
-			sliderFillCorner.Parent = sliderFill
-			local sliderBtn = Instance.new("TextButton")
-			sliderBtn.Size = UDim2.new(1,0,1,0)
-			sliderBtn.BackgroundTransparency = 1
-			sliderBtn.Text = ""
-			sliderBtn.Parent = sliderFrame
+			valueLbl.Parent = frame
+			local barBg = Instance.new("Frame")
+			barBg.Size = UDim2.new(1,-20,0,6)
+			barBg.Position = UDim2.new(0,10,1,-14)
+			barBg.BackgroundColor3 = Color3.fromRGB(40,40,40)
+			barBg.BorderSizePixel = 0
+			barBg.Parent = frame
+			Instance.new("UICorner",barBg).CornerRadius = UDim.new(1,0)
+			local barFill = Instance.new("Frame")
+			barFill.Size = UDim2.new((value-min)/(max-min),0,1,0)
+			barFill.BackgroundColor3 = theme.Accent
+			barFill.BorderSizePixel = 0
+			barFill.Parent = barBg
+			Instance.new("UICorner",barFill).CornerRadius = UDim.new(1,0)
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(1,0,1,0)
+			btn.BackgroundTransparency = 1
+			btn.Text = ""
+			btn.Parent = frame
 			local dragging = false
-			local sliderObj = {Value = value}
+			local sliderObj = {Value=value}
 			function sliderObj:Set(val)
-				value = math.clamp(val, min, max)
+				value = math.clamp(val,min,max)
 				self.Value = value
 				valueLbl.Text = tostring(value)
-				TweenService:Create(sliderFill, TI_Fast, {Size = UDim2.new((value-min)/(max-min),0,1,0)}):Play()
+				TweenService:Create(barFill,TweenInfo.new(0.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new((value-min)/(max-min),0,1,0)}):Play()
 			end
-			sliderBtn.MouseButton1Down:Connect(function() dragging = true end)
+			btn.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+			end)
 			UserInputService.InputEnded:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
 			end)
 			UserInputService.InputChanged:Connect(function(input)
 				if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 					local mousePos = UserInputService:GetMouseLocation().X
-					local sliderPos = sliderBg.AbsolutePosition.X
-					local sliderSize = sliderBg.AbsoluteSize.X
-					local relative = math.clamp((mousePos - sliderPos) / sliderSize, 0, 1)
-					value = math.floor(min + (max - min) * relative)
+					local barPos = barBg.AbsolutePosition.X
+					local barSize = barBg.AbsoluteSize.X
+					local relative = math.clamp((mousePos-barPos)/barSize,0,1)
+					value = math.floor(min+(max-min)*relative)
 					sliderObj.Value = value
 					valueLbl.Text = tostring(value)
-					TweenService:Create(sliderFill, TI_Fast, {Size = UDim2.new(relative,0,1,0)}):Play()
+					barFill.Size = UDim2.new(relative,0,1,0)
 					if callback then pcall(function() callback(value) end) end
 				end
 			end)
-			table.insert(VortexLibrary.ThemeListeners, function(t)
-				sliderFrame.BackgroundColor3 = t.Element
+			table.insert(VortexLibrary._listeners,function(t)
+				frame.BackgroundColor3 = t.Element
 				lbl.TextColor3 = t.TextMain
 				valueLbl.TextColor3 = t.Accent
-				sliderFill.BackgroundColor3 = t.Accent
+				barFill.BackgroundColor3 = t.Accent
 			end)
 			return sliderObj
 		end
-		function tabObj:CreateTextbox(labelText, placeholder, callback)
-			tabObj.LayoutOrder = tabObj.LayoutOrder + 1
+		function tabObj:CreateTextbox(labelText,placeholder,callback)
+			self._order = self._order + 1
 			local theme = Themes[VortexLibrary.CurrentTheme]
-			local textboxFrame = Instance.new("Frame")
-			textboxFrame.Name = "Textbox"
-			textboxFrame.Size = UDim2.new(1,-10,0,35)
-			textboxFrame.BackgroundColor3 = theme.Element
-			textboxFrame.BorderSizePixel = 0
-			textboxFrame.LayoutOrder = tabObj.LayoutOrder
-			textboxFrame.Parent = scrollFrame
-			local textboxCorner = Instance.new("UICorner")
-			textboxCorner.CornerRadius = UDim.new(0,4)
-			textboxCorner.Parent = textboxFrame
+			local frame = Instance.new("Frame")
+			frame.Size = UDim2.new(1,-10,0,36)
+			frame.BackgroundColor3 = theme.Element
+			frame.BorderSizePixel = 0
+			frame.LayoutOrder = self._order
+			frame.Parent = scrollFrame
+			Instance.new("UICorner",frame).CornerRadius = UDim.new(0,4)
 			local stroke = Instance.new("UIStroke")
 			stroke.Color = theme.Element
 			stroke.Thickness = 2
-			stroke.Parent = textboxFrame
+			stroke.Parent = frame
 			local lbl = Instance.new("TextLabel")
-			lbl.Size = UDim2.new(0.3,0,1,0)
+			lbl.Size = UDim2.new(0.4,0,1,0)
 			lbl.Position = UDim2.new(0,10,0,0)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = labelText or "Input"
 			lbl.TextColor3 = theme.TextMain
-			lbl.TextSize = 13
+			lbl.TextSize = 12
 			lbl.Font = Enum.Font.Gotham
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
-			lbl.Parent = textboxFrame
+			lbl.Parent = frame
 			local textbox = Instance.new("TextBox")
-			textbox.Size = UDim2.new(0.7,-20,1,0)
-			textbox.Position = UDim2.new(0.3,0,0,0)
+			textbox.Size = UDim2.new(0.6,-20,1,0)
+			textbox.Position = UDim2.new(0.4,0,0,0)
 			textbox.BackgroundTransparency = 1
 			textbox.PlaceholderText = placeholder or "Metin girin..."
 			textbox.PlaceholderColor3 = theme.TextSub
 			textbox.Text = ""
 			textbox.TextColor3 = theme.TextMain
-			textbox.TextSize = 13
+			textbox.TextSize = 12
 			textbox.Font = Enum.Font.Gotham
 			textbox.TextXAlignment = Enum.TextXAlignment.Left
 			textbox.ClearTextOnFocus = false
-			textbox.Parent = textboxFrame
-			local textboxObj = {Value = ""}
+			textbox.Parent = frame
+			local textboxObj = {Value=""}
 			function textboxObj:Set(txt)
 				textbox.Text = txt
 				self.Value = txt
 			end
 			textbox.Focused:Connect(function()
-				TweenService:Create(stroke, TI_Fast, {Color = theme.Accent}):Play()
+				TweenService:Create(stroke,TweenInfo.new(0.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Color=theme.Accent}):Play()
 			end)
 			textbox.FocusLost:Connect(function()
-				TweenService:Create(stroke, TI_Fast, {Color = theme.Element}):Play()
+				TweenService:Create(stroke,TweenInfo.new(0.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Color=theme.Element}):Play()
 				textboxObj.Value = textbox.Text
 				if callback and textbox.Text ~= "" then pcall(function() callback(textbox.Text) end) end
 			end)
-			table.insert(VortexLibrary.ThemeListeners, function(t)
-				textboxFrame.BackgroundColor3 = t.Element
+			table.insert(VortexLibrary._listeners,function(t)
+				frame.BackgroundColor3 = t.Element
 				stroke.Color = t.Element
 				lbl.TextColor3 = t.TextMain
 				textbox.TextColor3 = t.TextMain
@@ -701,65 +637,62 @@ function VortexLibrary:CreateWindow(title, size)
 			end)
 			return textboxObj
 		end
-		function tabObj:CreateDropdown(text, options, default, callback)
-			tabObj.LayoutOrder = tabObj.LayoutOrder + 1
+		function tabObj:CreateDropdown(text,options,default,callback)
+			self._order = self._order + 1
 			local theme = Themes[VortexLibrary.CurrentTheme]
 			local isOpen = false
 			local selected = default or (options[1] or "Seçiniz")
-			local dropFrame = Instance.new("Frame")
-			dropFrame.Name = "Dropdown"
-			dropFrame.Size = UDim2.new(1,-10,0,35)
-			dropFrame.BackgroundColor3 = theme.Element
-			dropFrame.BorderSizePixel = 0
-			dropFrame.LayoutOrder = tabObj.LayoutOrder
-			dropFrame.ClipsDescendants = true
-			dropFrame.Parent = scrollFrame
-			local dropCorner = Instance.new("UICorner")
-			dropCorner.CornerRadius = UDim.new(0,4)
-			dropCorner.Parent = dropFrame
+			local frame = Instance.new("Frame")
+			frame.Size = UDim2.new(1,-10,0,35)
+			frame.BackgroundColor3 = theme.Element
+			frame.BorderSizePixel = 0
+			frame.LayoutOrder = self._order
+			frame.ClipsDescendants = true
+			frame.Parent = scrollFrame
+			Instance.new("UICorner",frame).CornerRadius = UDim.new(0,4)
 			local headerBtn = Instance.new("TextButton")
 			headerBtn.Size = UDim2.new(1,0,0,35)
 			headerBtn.BackgroundTransparency = 1
 			headerBtn.Text = ""
-			headerBtn.Parent = dropFrame
+			headerBtn.Parent = frame
 			local lbl = Instance.new("TextLabel")
 			lbl.Size = UDim2.new(0.5,-10,0,35)
 			lbl.Position = UDim2.new(0,10,0,0)
 			lbl.BackgroundTransparency = 1
 			lbl.Text = text or "Dropdown"
 			lbl.TextColor3 = theme.TextMain
-			lbl.TextSize = 13
+			lbl.TextSize = 12
 			lbl.Font = Enum.Font.Gotham
 			lbl.TextXAlignment = Enum.TextXAlignment.Left
-			lbl.Parent = dropFrame
+			lbl.Parent = frame
 			local selectedLbl = Instance.new("TextLabel")
 			selectedLbl.Size = UDim2.new(0.5,-30,0,35)
 			selectedLbl.Position = UDim2.new(0.5,0,0,0)
 			selectedLbl.BackgroundTransparency = 1
 			selectedLbl.Text = selected
 			selectedLbl.TextColor3 = theme.Accent
-			selectedLbl.TextSize = 13
+			selectedLbl.TextSize = 12
 			selectedLbl.Font = Enum.Font.GothamBold
 			selectedLbl.TextXAlignment = Enum.TextXAlignment.Right
-			selectedLbl.Parent = dropFrame
+			selectedLbl.Parent = frame
 			local arrow = Instance.new("TextLabel")
 			arrow.Size = UDim2.new(0,20,0,35)
-			arrow.Position = UDim2.new(1,-25,0,0)
+			arrow.Position = UDim2.new(1,-24,0,0)
 			arrow.BackgroundTransparency = 1
 			arrow.Text = "▼"
 			arrow.TextColor3 = theme.TextSub
 			arrow.TextSize = 10
 			arrow.Font = Enum.Font.Gotham
-			arrow.Parent = dropFrame
+			arrow.Parent = frame
 			local optContainer = Instance.new("Frame")
 			optContainer.Size = UDim2.new(1,0,0,#options*30)
 			optContainer.Position = UDim2.new(0,0,0,35)
 			optContainer.BackgroundTransparency = 1
-			optContainer.Parent = dropFrame
+			optContainer.Parent = frame
 			local optLayout = Instance.new("UIListLayout")
 			optLayout.Padding = UDim.new(0,2)
 			optLayout.Parent = optContainer
-			local dropObj = {Value = selected}
+			local dropObj = {Value=selected}
 			function dropObj:Set(val)
 				selected = val
 				self.Value = val
@@ -779,24 +712,16 @@ function VortexLibrary:CreateWindow(title, size)
 					optBtn.BorderSizePixel = 0
 					optBtn.Text = opt
 					optBtn.TextColor3 = theme.TextMain
-					optBtn.TextSize = 12
+					optBtn.TextSize = 11
 					optBtn.Font = Enum.Font.Gotham
 					optBtn.Parent = optContainer
-					local optCorner = Instance.new("UICorner")
-					optCorner.CornerRadius = UDim.new(0,3)
-					optCorner.Parent = optBtn
-					optBtn.MouseEnter:Connect(function()
-						TweenService:Create(optBtn, TI_Fast, {BackgroundColor3 = theme.ElementHover}):Play()
-					end)
-					optBtn.MouseLeave:Connect(function()
-						TweenService:Create(optBtn, TI_Fast, {BackgroundColor3 = theme.Content}):Play()
-					end)
+					Instance.new("UICorner",optBtn).CornerRadius = UDim.new(0,3)
 					optBtn.MouseButton1Click:Connect(function()
 						selected = opt
 						dropObj.Value = opt
 						selectedLbl.Text = opt
 						isOpen = false
-						TweenService:Create(dropFrame, TI_Default, {Size = UDim2.new(1,-10,0,35)}):Play()
+						TweenService:Create(frame,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new(1,-10,0,35)}):Play()
 						if callback then pcall(function() callback(opt) end) end
 					end)
 				end
@@ -809,34 +734,26 @@ function VortexLibrary:CreateWindow(title, size)
 				optBtn.BorderSizePixel = 0
 				optBtn.Text = opt
 				optBtn.TextColor3 = theme.TextMain
-				optBtn.TextSize = 12
+				optBtn.TextSize = 11
 				optBtn.Font = Enum.Font.Gotham
 				optBtn.Parent = optContainer
-				local optCorner = Instance.new("UICorner")
-				optCorner.CornerRadius = UDim.new(0,3)
-				optCorner.Parent = optBtn
-				optBtn.MouseEnter:Connect(function()
-					TweenService:Create(optBtn, TI_Fast, {BackgroundColor3 = theme.ElementHover}):Play()
-				end)
-				optBtn.MouseLeave:Connect(function()
-					TweenService:Create(optBtn, TI_Fast, {BackgroundColor3 = theme.Content}):Play()
-				end)
+				Instance.new("UICorner",optBtn).CornerRadius = UDim.new(0,3)
 				optBtn.MouseButton1Click:Connect(function()
 					selected = opt
 					dropObj.Value = opt
 					selectedLbl.Text = opt
 					isOpen = false
-					TweenService:Create(dropFrame, TI_Default, {Size = UDim2.new(1,-10,0,35)}):Play()
+					TweenService:Create(frame,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new(1,-10,0,35)}):Play()
 					if callback then pcall(function() callback(opt) end) end
 				end)
 			end
 			headerBtn.MouseButton1Click:Connect(function()
 				isOpen = not isOpen
 				local targetSize = isOpen and UDim2.new(1,-10,0,35+#options*30+5) or UDim2.new(1,-10,0,35)
-				TweenService:Create(dropFrame, TI_Default, {Size = targetSize}):Play()
+				TweenService:Create(frame,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=targetSize}):Play()
 			end)
-			table.insert(VortexLibrary.ThemeListeners, function(t)
-				dropFrame.BackgroundColor3 = t.Element
+			table.insert(VortexLibrary._listeners,function(t)
+				frame.BackgroundColor3 = t.Element
 				lbl.TextColor3 = t.TextMain
 				selectedLbl.TextColor3 = t.Accent
 				arrow.TextColor3 = t.TextSub
@@ -844,21 +761,29 @@ function VortexLibrary:CreateWindow(title, size)
 			return dropObj
 		end
 		tabBtn.MouseButton1Click:Connect(function()
+			local theme = Themes[VortexLibrary.CurrentTheme]
 			for _,tab in pairs(winObj.Tabs) do
 				tab.Content.Visible = false
-				TweenService:Create(tab.Button, TI_Default, {BackgroundColor3 = theme.TabInactive, TextColor3 = theme.TextSub}):Play()
+				TweenService:Create(tab.Button,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundColor3=theme.TabInactive,TextColor3=theme.TextSub}):Play()
 			end
 			tabContent.Visible = true
-			TweenService:Create(tabBtn, TI_Default, {BackgroundColor3 = theme.TabActive, TextColor3 = theme.TextMain}):Play()
-			winObj.CurrentTab = tabObj
+			TweenService:Create(tabBtn,TweenInfo.new(0.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{BackgroundColor3=theme.Accent,TextColor3=theme.TextMain}):Play()
 		end)
-		table.insert(winObj.Tabs, tabObj)
+		table.insert(winObj.Tabs,tabObj)
 		if #winObj.Tabs == 1 then
 			tabContent.Visible = true
-			tabBtn.BackgroundColor3 = theme.TabActive
+			tabBtn.BackgroundColor3 = theme.Accent
 			tabBtn.TextColor3 = theme.TextMain
-			winObj.CurrentTab = tabObj
 		end
+		table.insert(VortexLibrary._listeners,function(t)
+			if tabContent.Visible then
+				tabBtn.BackgroundColor3 = t.Accent
+				tabBtn.TextColor3 = t.TextMain
+			else
+				tabBtn.BackgroundColor3 = t.TabInactive
+				tabBtn.TextColor3 = t.TextSub
+			end
+		end)
 		return tabObj
 	end
 	return winObj
