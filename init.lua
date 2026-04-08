@@ -1,1267 +1,657 @@
--- ╔══════════════════════════════════════════════════════════════════╗
--- ║           VORTEX ENGINE v3.0 - ULTIMATE UI CREATIVE ENGINE      ║
--- ║           Tam Özgürlük | Sınırsız Tasarım | Her Şeyi Yap       ║
--- ╚══════════════════════════════════════════════════════════════════╝
+--[[
+    VortexLib — Standalone Reusable Roblox GUI Library
+    ────────────────────────────────────────────────────
+    Quick-start:
+        local VortexLib = loadstring(game:HttpGet("YOUR_RAW_URL"))()
 
-local VortexEngine = {}
-VortexEngine.__index = VortexEngine
-VortexEngine.Version = "3.0.0"
-VortexEngine.Instances = {}
+        local win = VortexLib:CreateWindow({
+            Title      = "My Script",
+            Subtitle   = "v1.0",
+            ToggleKey  = Enum.KeyCode.RightControl,
+        })
 
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
+        local tab = win:AddTab("Farm")
+        tab:Header("Auto Farm", "Configure the farming loop.")
+        tab:Section("SETTINGS")
+        tab:Toggle("Enable Farm", false, function(v) print("farm", v) end)
+        tab:Slider("Speed", {Min=16, Max=200, Default=16}, function(v) print("speed", v) end)
+        tab:Button("Collect Now", function() print("collected") end)
+        tab:Input("Item Name", "e.g. Apple", function(v) print("item", v) end)
+        tab:Label("Status: Idle")
+]]
+
+-- ────────────────────────────────────────────────────────────────────────────
+local VortexLib  = {}
+VortexLib.__index = VortexLib
+
+-- Services
+local TS   = game:GetService("TweenService")
+local UIS  = game:GetService("UserInputService")
+local RS   = game:GetService("RunService")
 local Players = game:GetService("Players")
+local player  = Players.LocalPlayer
 
--- ═══════════════════════════════════════════════════════════════════
---  CORE SYSTEM - Temel Motor
--- ═══════════════════════════════════════════════════════════════════
+-- ── Default theme ────────────────────────────────────────────────────────────
+VortexLib.DefaultTheme = {
+    BG          = Color3.fromRGB(10,  10,  15),
+    BGCard      = Color3.fromRGB(16,  16,  26),
+    Accent      = Color3.fromRGB(139, 92,  246),
+    Neon        = Color3.fromRGB(52,  211, 153),
+    Blue        = Color3.fromRGB(96,  165, 250),
+    BlueDeep    = Color3.fromRGB(59,  130, 246),
+    GlassStroke = Color3.fromRGB(160, 150, 230),
+    Text        = Color3.fromRGB(248, 250, 252),
+    TextMuted   = Color3.fromRGB(148, 163, 184),
+    Divider     = Color3.fromRGB(55,  55,  85),
+}
 
-function VortexEngine.new()
-	local self = setmetatable({}, VortexEngine)
-	self.ScreenGui = Instance.new("ScreenGui")
-	self.ScreenGui.Name = "VortexEngine_" .. tick()
-	self.ScreenGui.ResetOnSpawn = false
-	self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	self.ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
-	self.Elements = {}
-	self.Animations = {}
-	table.insert(VortexEngine.Instances, self)
-	return self
+-- ── Internal helpers ─────────────────────────────────────────────────────────
+local function corner(r, p)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r)
+    c.Parent = p
+    return c
 end
 
--- ═══════════════════════════════════════════════════════════════════
---  SHAPE ENGINE - Her Şekli Oluştur
--- ═══════════════════════════════════════════════════════════════════
-
-function VortexEngine:CreateShape(config)
-	config = config or {}
-	local shape = Instance.new(config.Type or "Frame")
-	shape.Name = config.Name or "Shape"
-	shape.Size = config.Size or UDim2.new(0, 100, 0, 100)
-	shape.Position = config.Position or UDim2.new(0, 0, 0, 0)
-	shape.AnchorPoint = config.AnchorPoint or Vector2.new(0, 0)
-	shape.BackgroundColor3 = config.Color or Color3.fromRGB(255, 255, 255)
-	shape.BackgroundTransparency = config.Transparency or 0
-	shape.BorderSizePixel = config.BorderSize or 0
-	shape.Rotation = config.Rotation or 0
-	shape.ZIndex = config.ZIndex or 1
-	shape.ClipsDescendants = config.ClipChildren or false
-	
-	if config.Corner then
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(config.Corner.Scale or 0, config.Corner.Offset or 0)
-		corner.Parent = shape
-	end
-	
-	if config.Stroke then
-		local stroke = Instance.new("UIStroke")
-		stroke.Color = config.Stroke.Color or Color3.fromRGB(255, 255, 255)
-		stroke.Thickness = config.Stroke.Thickness or 1
-		stroke.Transparency = config.Stroke.Transparency or 0
-		stroke.ApplyStrokeMode = config.Stroke.Mode or Enum.ApplyStrokeMode.Border
-		stroke.Parent = shape
-	end
-	
-	if config.Gradient then
-		local gradient = Instance.new("UIGradient")
-		gradient.Color = config.Gradient.Colors or ColorSequence.new(Color3.fromRGB(255,255,255))
-		gradient.Rotation = config.Gradient.Rotation or 0
-		gradient.Transparency = config.Gradient.Transparency or NumberSequence.new(0)
-		gradient.Offset = config.Gradient.Offset or Vector2.new(0, 0)
-		gradient.Parent = shape
-	end
-	
-	if config.Image and shape:IsA("ImageLabel") then
-		shape.Image = config.Image
-		shape.ImageColor3 = config.ImageColor or Color3.fromRGB(255, 255, 255)
-		shape.ImageTransparency = config.ImageTransparency or 0
-		shape.ScaleType = config.ScaleType or Enum.ScaleType.Stretch
-	end
-	
-	if config.Text and (shape:IsA("TextLabel") or shape:IsA("TextButton")) then
-		shape.Text = config.Text
-		shape.TextColor3 = config.TextColor or Color3.fromRGB(255, 255, 255)
-		shape.TextSize = config.TextSize or 14
-		shape.Font = config.Font or Enum.Font.Gotham
-		shape.TextXAlignment = config.TextXAlign or Enum.TextXAlignment.Center
-		shape.TextYAlignment = config.TextYAlign or Enum.TextYAlignment.Center
-		shape.TextWrapped = config.TextWrap or false
-		shape.TextScaled = config.TextScaled or false
-	end
-	
-	shape.Parent = config.Parent or self.ScreenGui
-	
-	local element = {
-		Instance = shape,
-		Config = config,
-		Children = {},
-		Animations = {},
-		Events = {}
-	}
-	
-	table.insert(self.Elements, element)
-	return element
+local function uistroke(color, thick, trans, p)
+    local s = Instance.new("UIStroke")
+    s.Color = color; s.Thickness = thick; s.Transparency = trans
+    s.Parent = p
+    return s
 end
 
--- ═══════════════════════════════════════════════════════════════════
---  CUSTOM ELEMENT - Tamamen Özel Eleman
--- ═══════════════════════════════════════════════════════════════════
-
-function VortexEngine:CreateCustomElement(config)
-	return self:CreateShape(config)
+local function newFrame(parent, size, pos, color, trans, zi)
+    local f = Instance.new("Frame")
+    f.Size = size or UDim2.new(1,0,1,0)
+    if pos   then f.Position = pos end
+    if color then f.BackgroundColor3 = color end
+    f.BackgroundTransparency = trans or 1
+    f.BorderSizePixel = 0
+    if zi then f.ZIndex = zi end
+    f.Parent = parent
+    return f
 end
 
--- ═══════════════════════════════════════════════════════════════════
---  ANIMATION ENGINE - Güçlü Animasyon Sistemi
--- ═══════════════════════════════════════════════════════════════════
-
-function VortexEngine:Animate(element, properties, duration, style, direction, repeatCount, reverses, delayTime)
-	local instance = type(element) == "table" and element.Instance or element
-	duration = duration or 0.3
-	style = style or Enum.EasingStyle.Quad
-	direction = direction or Enum.EasingDirection.Out
-	repeatCount = repeatCount or 0
-	reverses = reverses or false
-	delayTime = delayTime or 0
-	
-	local tweenInfo = TweenInfo.new(duration, style, direction, repeatCount, reverses, delayTime)
-	local tween = TweenService:Create(instance, tweenInfo, properties)
-	tween:Play()
-	
-	if type(element) == "table" then
-		table.insert(element.Animations, tween)
-	end
-	
-	return tween
+local function newText(class, parent, text, size, color, font, xa, ya)
+    local l = Instance.new(class)
+    l.BackgroundTransparency = 1
+    l.Text = text or ""
+    l.TextSize = size or 14
+    l.TextColor3 = color
+    l.Font = font or Enum.Font.GothamMedium
+    l.TextXAlignment = xa or Enum.TextXAlignment.Left
+    if ya then l.TextYAlignment = ya end
+    l.Parent = parent
+    return l
 end
 
-function VortexEngine:AnimateChain(element, animations)
-	local instance = type(element) == "table" and element.Instance or element
-	local currentIndex = 1
-	
-	local function playNext()
-		if currentIndex > #animations then return end
-		local anim = animations[currentIndex]
-		local tween = self:Animate(
-			instance,
-			anim.Properties,
-			anim.Duration,
-			anim.Style,
-			anim.Direction,
-			anim.Repeat,
-			anim.Reverses,
-			anim.Delay
-		)
-		currentIndex = currentIndex + 1
-		tween.Completed:Connect(playNext)
-	end
-	
-	playNext()
+local function easeTween(obj, t, props)
+    TS:Create(obj, TweenInfo.new(t, Enum.EasingStyle.Quad), props):Play()
 end
 
-function VortexEngine:Pulse(element, scale, duration)
-	local instance = type(element) == "table" and element.Instance or element
-	scale = scale or 1.1
-	duration = duration or 0.5
-	
-	self:Animate(instance, {Size = instance.Size * scale}, duration/2, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-	task.wait(duration/2)
-	self:Animate(instance, {Size = instance.Size / scale}, duration/2, Enum.EasingStyle.Sine, Enum.EasingDirection.In)
-end
+-- ── CreateWindow ─────────────────────────────────────────────────────────────
+function VortexLib:CreateWindow(opts)
+    opts = opts or {}
+    local C         = opts.Theme or self.DefaultTheme
+    local title     = opts.Title or "VortexLib"
+    local subtitle  = opts.Subtitle or ""
+    local toggleKey = opts.ToggleKey or Enum.KeyCode.RightControl
+    local W, H      = opts.Width or 688, opts.Height or 460
+    local COL_SIDE   = opts.SidebarWidth or 76
+    local COL_VORTEX  = opts.VortexPanel and 312 or 0
 
-function VortexEngine:PulseLoop(element, scale, duration)
-	local instance = type(element) == "table" and element.Instance or element
-	scale = scale or 1.1
-	duration = duration or 1
-	
-	local originalSize = instance.Size
-	self:Animate(instance, {Size = originalSize * scale}, duration, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-end
+    -- ── ScreenGui ──────────────────────────────────────────────────
+    local sg = Instance.new("ScreenGui")
+    sg.Name           = opts.GuiName or ("VL_"..title)
+    sg.ResetOnSpawn   = false
+    sg.DisplayOrder   = opts.DisplayOrder or 50
+    sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    sg.IgnoreGuiInset = true
+    pcall(function()
+        if syn and syn.protect_gui then syn.protect_gui(sg) end
+        sg.Parent = game:GetService("CoreGui")
+    end)
+    if not sg.Parent then sg.Parent = player.PlayerGui end
 
-function VortexEngine:Rotate(element, speed)
-	local instance = type(element) == "table" and element.Instance or element
-	speed = speed or 1
-	
-	local connection
-	connection = RunService.RenderStepped:Connect(function(dt)
-		if not instance or not instance.Parent then
-			connection:Disconnect()
-			return
-		end
-		instance.Rotation = instance.Rotation + (speed * dt * 60)
-	end)
-	
-	return connection
-end
+    -- Cursor overlay (full-screen, above everything)
+    local cursorOverlay = newFrame(sg)
+    cursorOverlay.ZIndex = 500; cursorOverlay.Active = false
+    cursorOverlay.Selectable = false; cursorOverlay.ClipsDescendants = false
+    pcall(function() cursorOverlay.Interactable = false end)
 
-function VortexEngine:Glow(element, intensity, range, color)
-	local instance = type(element) == "table" and element.Instance or element
-	intensity = intensity or 2
-	range = range or 20
-	color = color or Color3.fromRGB(255, 255, 255)
-	
-	local glow = Instance.new("ImageLabel")
-	glow.Name = "Glow"
-	glow.Size = UDim2.new(1, range*2, 1, range*2)
-	glow.Position = UDim2.new(0.5, -range, 0.5, -range)
-	glow.AnchorPoint = Vector2.new(0.5, 0.5)
-	glow.BackgroundTransparency = 1
-	glow.Image = "rbxassetid://6031097225"
-	glow.ImageColor3 = color
-	glow.ImageTransparency = 1 - (intensity / 10)
-	glow.ZIndex = instance.ZIndex - 1
-	glow.Parent = instance
-	
-	return glow
-end
+    -- ── Main frame ─────────────────────────────────────────────────
+    local main = newFrame(sg,
+        UDim2.fromOffset(W, H),
+        UDim2.new(0.5, -W/2, 0.5, -H/2),
+        C.BG, 0.2, 2)
+    main.ClipsDescendants = true
+    corner(16, main)
+    uistroke(C.GlassStroke, 1, 0.55, main)
 
-function VortexEngine:FadeIn(element, duration)
-	local instance = type(element) == "table" and element.Instance or element
-	duration = duration or 0.5
-	instance.BackgroundTransparency = 1
-	self:Animate(instance, {BackgroundTransparency = 0}, duration)
-end
+    local glassGrad = Instance.new("UIGradient")
+    glassGrad.Rotation = 128
+    glassGrad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.86),
+        NumberSequenceKeypoint.new(0.45, 0.93),
+        NumberSequenceKeypoint.new(1, 0.88),
+    })
+    glassGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, C.Accent),
+        ColorSequenceKeypoint.new(0.5, C.BG),
+        ColorSequenceKeypoint.new(1, C.Blue or C.Accent),
+    })
+    glassGrad.Parent = main
 
-function VortexEngine:FadeOut(element, duration)
-	local instance = type(element) == "table" and element.Instance or element
-	duration = duration or 0.5
-	self:Animate(instance, {BackgroundTransparency = 1}, duration)
-end
+    -- ── Drag ───────────────────────────────────────────────────────
+    do
+        local drag, dragStart, startPos
+        main.InputBegan:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                drag = true; dragStart = inp.Position; startPos = main.Position
+            end
+        end)
+        UIS.InputChanged:Connect(function(inp)
+            if drag and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                local d = inp.Position - dragStart
+                main.Position = UDim2.new(
+                    startPos.X.Scale, startPos.X.Offset + d.X,
+                    startPos.Y.Scale, startPos.Y.Offset + d.Y)
+            end
+        end)
+        UIS.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end
+        end)
+    end
 
-function VortexEngine:Shake(element, intensity, duration)
-	local instance = type(element) == "table" and element.Instance or element
-	intensity = intensity or 5
-	duration = duration or 0.5
-	
-	local originalPos = instance.Position
-	local startTime = tick()
-	
-	local connection
-	connection = RunService.RenderStepped:Connect(function()
-		if tick() - startTime >= duration then
-			instance.Position = originalPos
-			connection:Disconnect()
-			return
-		end
-		
-		local offsetX = math.random(-intensity, intensity)
-		local offsetY = math.random(-intensity, intensity)
-		instance.Position = UDim2.new(
-			originalPos.X.Scale, originalPos.X.Offset + offsetX,
-			originalPos.Y.Scale, originalPos.Y.Offset + offsetY
-		)
-	end)
-end
+    -- ── TopBar ─────────────────────────────────────────────────────
+    local topbar = newFrame(main, UDim2.new(1,0,0,48), UDim2.new(0,0,0,0), C.BGCard, 0.25, 10)
+    corner(16, topbar)
 
--- ═══════════════════════════════════════════════════════════════════
---  INTERACTION SYSTEM - Etkileşim Motoru
--- ═══════════════════════════════════════════════════════════════════
+    local logoLbl = newText("TextLabel", topbar, title, 14, C.Text, Enum.Font.GothamBold)
+    logoLbl.Size = UDim2.new(0, 200, 0, 30)
+    logoLbl.Position = UDim2.new(0, 14, 0.5, -15)
+    logoLbl.ZIndex = 11
 
-function VortexEngine:MakeInteractive(element, config)
-	local instance = type(element) == "table" and element.Instance or element
-	config = config or {}
-	
-	if not instance:IsA("GuiButton") then
-		local button = Instance.new("TextButton")
-		button.Size = UDim2.new(1, 0, 1, 0)
-		button.BackgroundTransparency = 1
-		button.Text = ""
-		button.ZIndex = instance.ZIndex + 1
-		button.Parent = instance
-		instance = button
-	end
-	
-	if config.HoverEffect then
-		instance.MouseEnter:Connect(function()
-			if config.HoverEffect.Scale then
-				self:Animate(instance.Parent, {Size = instance.Parent.Size * config.HoverEffect.Scale}, 0.2)
-			end
-			if config.HoverEffect.Color then
-				self:Animate(instance.Parent, {BackgroundColor3 = config.HoverEffect.Color}, 0.2)
-			end
-			if config.HoverEffect.Transparency then
-				self:Animate(instance.Parent, {BackgroundTransparency = config.HoverEffect.Transparency}, 0.2)
-			end
-			if config.OnHover then
-				pcall(config.OnHover)
-			end
-		end)
-		
-		instance.MouseLeave:Connect(function()
-			if config.HoverEffect.Scale then
-				self:Animate(instance.Parent, {Size = instance.Parent.Size / config.HoverEffect.Scale}, 0.2)
-			end
-			if config.HoverEffect.OriginalColor then
-				self:Animate(instance.Parent, {BackgroundColor3 = config.HoverEffect.OriginalColor}, 0.2)
-			end
-			if config.HoverEffect.OriginalTransparency then
-				self:Animate(instance.Parent, {BackgroundTransparency = config.HoverEffect.OriginalTransparency}, 0.2)
-			end
-			if config.OnLeave then
-				pcall(config.OnLeave)
-			end
-		end)
-	end
-	
-	if config.ClickEffect then
-		instance.MouseButton1Click:Connect(function()
-			if config.ClickEffect.Shake then
-				self:Shake(instance.Parent, config.ClickEffect.Shake.Intensity, config.ClickEffect.Shake.Duration)
-			end
-			if config.ClickEffect.Flash then
-				local original = instance.Parent.BackgroundColor3
-				self:Animate(instance.Parent, {BackgroundColor3 = config.ClickEffect.Flash}, 0.1)
-				task.wait(0.1)
-				self:Animate(instance.Parent, {BackgroundColor3 = original}, 0.1)
-			end
-			if config.ClickEffect.Ripple then
-				self:CreateRipple(instance.Parent, config.ClickEffect.Ripple)
-			end
-			if config.OnClick then
-				pcall(config.OnClick)
-			end
-		end)
-	end
-	
-	return instance
-end
+    if subtitle ~= "" then
+        local subLbl = newText("TextLabel", topbar, subtitle, 11, C.TextMuted)
+        subLbl.Size = UDim2.new(0, 120, 0, 14)
+        subLbl.Position = UDim2.new(0, 14 + logoLbl.TextBounds.X + 8, 0.5, -7)
+        subLbl.ZIndex = 11
+    end
 
-function VortexEngine:CreateRipple(element, color)
-	local instance = type(element) == "table" and element.Instance or element
-	color = color or Color3.fromRGB(255, 255, 255)
-	
-	local ripple = Instance.new("Frame")
-	ripple.Size = UDim2.new(0, 0, 0, 0)
-	ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
-	ripple.AnchorPoint = Vector2.new(0.5, 0.5)
-	ripple.BackgroundColor3 = color
-	ripple.BackgroundTransparency = 0.5
-	ripple.BorderSizePixel = 0
-	ripple.ZIndex = instance.ZIndex + 10
-	ripple.Parent = instance
-	
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(1, 0)
-	corner.Parent = ripple
-	
-	local maxSize = math.max(instance.AbsoluteSize.X, instance.AbsoluteSize.Y) * 2
-	
-	self:Animate(ripple, {
-		Size = UDim2.new(0, maxSize, 0, maxSize),
-		BackgroundTransparency = 1
-	}, 0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	
-	task.delay(0.6, function()
-		ripple:Destroy()
-	end)
-end
+    local function makeHeaderBtn(txt, color, xOff)
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(0, 32, 0, 32)
+        b.Position = UDim2.new(1, xOff, 0.5, -16)
+        b.BackgroundColor3 = C.BG; b.BackgroundTransparency = 0.4
+        b.Text = txt; b.TextColor3 = color; b.TextSize = 18
+        b.Font = Enum.Font.GothamMedium; b.AutoButtonColor = false
+        b.BorderSizePixel = 0; b.ZIndex = 11
+        corner(8, b); b.Parent = topbar
+        b.MouseEnter:Connect(function() easeTween(b, 0.1, {BackgroundTransparency=0.1}) end)
+        b.MouseLeave:Connect(function() easeTween(b, 0.1, {BackgroundTransparency=0.4}) end)
+        return b
+    end
+    local closeBtn = makeHeaderBtn("×", Color3.fromRGB(248,113,113), -40)
+    local minBtn   = makeHeaderBtn("−", C.Neon, -78)
 
-function VortexEngine:MakeDraggable(element, handle)
-	local instance = type(element) == "table" and element.Instance or element
-	handle = handle or instance
-	
-	local dragging = false
-	local dragInput, mousePos, framePos
-	
-	handle.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			mousePos = input.Position
-			framePos = instance.Position
-			
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
-				end
-			end)
-		end
-	end)
-	
-	handle.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			dragInput = input
-		end
-	end)
-	
-	UserInputService.InputChanged:Connect(function(input)
-		if input == dragInput and dragging then
-			local delta = input.Position - mousePos
-			instance.Position = UDim2.new(
-				framePos.X.Scale,
-				framePos.X.Offset + delta.X,
-				framePos.Y.Scale,
-				framePos.Y.Offset + delta.Y
-			)
-		end
-	end)
-end
+    -- ── Body ───────────────────────────────────────────────────────
+    local body = newFrame(main, UDim2.new(1,-24,1,-60), UDim2.new(0,12,0,52), C.BG, 1, 3)
 
--- ═══════════════════════════════════════════════════════════════════
---  LAYOUT ENGINE - Otomatik Düzenleme
--- ═══════════════════════════════════════════════════════════════════
+    -- ── InnerCard ──────────────────────────────────────────────────
+    local inner = newFrame(body, UDim2.new(1,0,1,0), nil, C.BGCard, 0.35, 4)
+    corner(14, inner)
+    local innerStroke = uistroke(C.GlassStroke, 1, 0.72, inner)
 
-function VortexEngine:CreateLayout(parent, layoutType, config)
-	local instance = type(parent) == "table" and parent.Instance or parent
-	config = config or {}
-	
-	local layout
-	
-	if layoutType == "List" then
-		layout = Instance.new("UIListLayout")
-		layout.FillDirection = config.Direction or Enum.FillDirection.Vertical
-		layout.HorizontalAlignment = config.HAlign or Enum.HorizontalAlignment.Center
-		layout.VerticalAlignment = config.VAlign or Enum.VerticalAlignment.Top
-		layout.Padding = config.Padding or UDim.new(0, 5)
-		layout.SortOrder = config.SortOrder or Enum.SortOrder.LayoutOrder
-	elseif layoutType == "Grid" then
-		layout = Instance.new("UIGridLayout")
-		layout.CellSize = config.CellSize or UDim2.new(0, 100, 0, 100)
-		layout.CellPadding = config.CellPadding or UDim2.new(0, 5, 0, 5)
-		layout.FillDirection = config.Direction or Enum.FillDirection.Horizontal
-		layout.HorizontalAlignment = config.HAlign or Enum.HorizontalAlignment.Center
-		layout.VerticalAlignment = config.VAlign or Enum.VerticalAlignment.Top
-		layout.SortOrder = config.SortOrder or Enum.SortOrder.LayoutOrder
-	elseif layoutType == "Table" then
-		layout = Instance.new("UITableLayout")
-		layout.FillDirection = config.Direction or Enum.FillDirection.Horizontal
-		layout.Padding = config.Padding or UDim2.new(0, 5, 0, 5)
-	elseif layoutType == "Page" then
-		layout = Instance.new("UIPageLayout")
-		layout.Animated = config.Animated ~= false
-		layout.Circular = config.Circular or false
-		layout.EasingDirection = config.EasingDirection or Enum.EasingDirection.Out
-		layout.EasingStyle = config.EasingStyle or Enum.EasingStyle.Quad
-		layout.TweenTime = config.TweenTime or 0.5
-	end
-	
-	if layout then
-		layout.Parent = instance
-	end
-	
-	return layout
-end
+    -- ── Sidebar ────────────────────────────────────────────────────
+    local sidebar = newFrame(inner, UDim2.new(0, COL_SIDE, 1, 0), nil, nil, 1, 5)
+    do
+        local sl = Instance.new("UIListLayout")
+        sl.FillDirection = Enum.FillDirection.Vertical
+        sl.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        sl.VerticalAlignment = Enum.VerticalAlignment.Top
+        sl.Padding = UDim.new(0, 5)
+        sl.SortOrder = Enum.SortOrder.LayoutOrder
+        sl.Parent = sidebar
+        local sp = Instance.new("UIPadding"); sp.PaddingTop = UDim.new(0,10); sp.Parent = sidebar
+    end
 
-function VortexEngine:CreatePadding(parent, config)
-	local instance = type(parent) == "table" and parent.Instance or parent
-	config = config or {}
-	
-	local padding = Instance.new("UIPadding")
-	padding.PaddingTop = config.Top or UDim.new(0, 0)
-	padding.PaddingBottom = config.Bottom or UDim.new(0, 0)
-	padding.PaddingLeft = config.Left or UDim.new(0, 0)
-	padding.PaddingRight = config.Right or UDim.new(0, 0)
-	padding.Parent = instance
-	
-	return padding
-end
+    -- Sidebar divider
+    local sdiv = newFrame(inner, UDim2.new(0,1,1,0), UDim2.new(0, COL_SIDE, 0,0), C.Divider, 0.4, 5)
 
-function VortexEngine:CreateAspectRatio(parent, ratio)
-	local instance = type(parent) == "table" and parent.Instance or parent
-	
-	local aspect = Instance.new("UIAspectRatioConstraint")
-	aspect.AspectRatio = ratio or 1
-	aspect.Parent = instance
-	
-	return aspect
-end
+    -- ── Vortex decoration panel (optional) ────────────────────────
+    local vortexDots, vortexRings, vortexCore, vortexPanel = {}, {}, nil, nil
+    local function lerpC3(a,b,t) return Color3.new(a.R+(b.R-a.R)*t,a.G+(b.G-a.G)*t,a.B+(b.B-a.B)*t) end
+    if COL_VORTEX > 0 then
+        vortexPanel = newFrame(inner, UDim2.new(0,COL_VORTEX,1,0), UDim2.new(0,COL_SIDE,0,0), Color3.fromRGB(6,8,18), 0.35, 5)
+        vortexPanel.ClipsDescendants = true
+        local vg = Instance.new("UIGradient"); vg.Rotation = 92
+        vg.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,C.Blue),ColorSequenceKeypoint.new(0.35,C.BG),ColorSequenceKeypoint.new(0.65,C.Accent),ColorSequenceKeypoint.new(1,C.Blue)})
+        vg.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.55),NumberSequenceKeypoint.new(0.5,0.78),NumberSequenceKeypoint.new(1,0.6)})
+        vg.Parent = vortexPanel
+        local vvig = newFrame(vortexPanel, nil, nil, C.BG, 0.15, 4)
+        local vigG = Instance.new("UIGradient"); vigG.Color = ColorSequence.new(Color3.new(1,1,1))
+        vigG.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.88),NumberSequenceKeypoint.new(0.45,0.96),NumberSequenceKeypoint.new(1,0.82)}); vigG.Parent = vvig
+        newFrame(inner, UDim2.new(0,1,1,0), UDim2.new(0,COL_SIDE+COL_VORTEX,0,0), C.Divider, 0.4, 5)
+        local function addRing(sz,tr,sT,z)
+            local f = newFrame(vortexPanel, UDim2.fromOffset(sz,sz), nil, C.Accent, tr, z)
+            f.AnchorPoint = Vector2.new(0.5,0.5); f.Position = UDim2.new(0.5,0,0.5,0)
+            corner(math.floor(sz/2), f)
+            if sT < 1 then uistroke(C.Blue, 2, sT, f) end
+            table.insert(vortexRings, f); return f
+        end
+        addRing(118,0.94,0.55,9); addRing(78,0.88,0.45,10); vortexCore = addRing(48,0.55,0.25,11)
+        local hot = newFrame(vortexPanel, UDim2.fromOffset(16,16), nil, C.Text, 0.2, 12)
+        hot.AnchorPoint = Vector2.new(0.5,0.5); hot.Position = UDim2.new(0.5,0,0.5,0); corner(8, hot)
+        table.insert(vortexRings, hot)
+        local ARMS, PTS, LAYERS = 6, 46, 2; local di = 0
+        for layer = 1, LAYERS do
+            local ls = (layer==1) and 1 or -0.72; local lsc = (layer==1) and 1 or 0.78
+            for arm = 0, ARMS-1 do
+                for j = 1, PTS do
+                    di = di+1; local d = newFrame(vortexPanel)
+                    local u = j/PTS; local sz2 = math.floor(2.5+u*u*5.5)
+                    if layer==2 then sz2 = math.max(2,sz2-1) end
+                    d.Size = UDim2.fromOffset(sz2,sz2); d.AnchorPoint = Vector2.new(0.5,0.5)
+                    d.ZIndex = layer==1 and 7 or 6; corner(math.ceil(sz2/2), d)
+                    local g = Instance.new("UIGradient"); g.Rotation = 40
+                    g.Color = ColorSequence.new({ColorSequenceKeypoint.new(0,C.Accent),ColorSequenceKeypoint.new(0.5,C.Blue),ColorSequenceKeypoint.new(1,C.Neon)})
+                    g.Parent = d
+                    vortexDots[di] = {frame=d,arm=arm,j=j,jMax=PTS,layer=layer,layerSpin=ls,layerScale=lsc}
+                end
+            end
+        end
+    end
 
--- ═══════════════════════════════════════════════════════════════════
---  PARTICLE SYSTEM - Parçacık Efektleri
--- ═══════════════════════════════════════════════════════════════════
+    -- ── Right panel ────────────────────────────────────────────────
+    local rightPanel = newFrame(inner,
+        UDim2.new(1, -(COL_SIDE+COL_VORTEX), 1, 0),
+        UDim2.new(0, COL_SIDE+COL_VORTEX, 0, 0),
+        nil, 1, 5)
 
-function VortexEngine:CreateParticles(parent, config)
-	local instance = type(parent) == "table" and parent.Instance or parent
-	config = config or {}
-	
-	local count = config.Count or 20
-	local minSize = config.MinSize or 2
-	local maxSize = config.MaxSize or 5
-	local color = config.Color or Color3.fromRGB(255, 255, 255)
-	local speed = config.Speed or 1
-	local lifetime = config.Lifetime or 5
-	
-	for i = 1, count do
-		local particle = Instance.new("Frame")
-		particle.Size = UDim2.new(0, math.random(minSize, maxSize), 0, math.random(minSize, maxSize))
-		particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-		particle.BackgroundColor3 = color
-		particle.BackgroundTransparency = math.random(30, 70) / 100
-		particle.BorderSizePixel = 0
-		particle.Parent = instance
-		
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(1, 0)
-		corner.Parent = particle
-		
-		task.spawn(function()
-			while particle and particle.Parent do
-				local duration = math.random(20, 40) / (10 * speed)
-				self:Animate(particle, {
-					Position = UDim2.new(math.random(), 0, math.random(), 0),
-					BackgroundTransparency = math.random(30, 90) / 100
-				}, duration, Enum.EasingStyle.Linear)
-				task.wait(duration)
-			end
-		end)
-		
-		if lifetime > 0 then
-			task.delay(lifetime, function()
-				if particle then particle:Destroy() end
-			end)
-		end
-	end
-end
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1,-16,1,-12)
+    scroll.Position = UDim2.new(0,8,0,6)
+    scroll.BackgroundTransparency = 1; scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 3; scroll.ScrollBarImageColor3 = C.Accent
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    scroll.CanvasSize = UDim2.new(0,0,0,0)
+    scroll.ZIndex = 6; scroll.Parent = rightPanel
 
--- ═══════════════════════════════════════════════════════════════════
---  SPRITE ANIMATION - GIF Benzeri Animasyon
--- ═══════════════════════════════════════════════════════════════════
+    -- ── Glass strength helper ──────────────────────────────────────
+    local mainStroke = main:FindFirstChildOfClass("UIStroke")
+    local function setGlass(s)
+        s = math.clamp(s, 0, 1)
+        main.BackgroundTransparency       = 0.02 + s*0.88
+        inner.BackgroundTransparency      = 0.04 + s*0.78
+        topbar.BackgroundTransparency     = 0.06 + s*0.62
+        innerStroke.Transparency          = 0.35 + s*0.55
+        if mainStroke then mainStroke.Transparency = 0.35 + s*0.45 end
+    end
 
-function VortexEngine:CreateSpriteAnimation(parent, config)
-	local instance = type(parent) == "table" and parent.Instance or parent
-	config = config or {}
-	
-	local imageLabel = Instance.new("ImageLabel")
-	imageLabel.Size = config.Size or UDim2.new(1, 0, 1, 0)
-	imageLabel.Position = config.Position or UDim2.new(0, 0, 0, 0)
-	imageLabel.BackgroundTransparency = 1
-	imageLabel.Parent = instance
-	
-	local frames = config.Frames or {}
-	local fps = config.FPS or 10
-	local loop = config.Loop ~= false
-	local currentFrame = 1
-	
-	local function animate()
-		while true do
-			if currentFrame > #frames then
-				if not loop then break end
-				currentFrame = 1
-			end
-			
-			imageLabel.Image = frames[currentFrame]
-			currentFrame = currentFrame + 1
-			task.wait(1 / fps)
-		end
-	end
-	
-	task.spawn(animate)
-	
-	return imageLabel
-end
+    local function pointOverHub(screen)
+        if not main.Visible then return false end
+        local ap = main.AbsolutePosition; local sz = main.AbsoluteSize
+        if sz.X < 2 or sz.Y < 2 then return false end
+        return screen.X>=ap.X and screen.X<ap.X+sz.X and screen.Y>=ap.Y and screen.Y<ap.Y+sz.Y
+    end
 
--- ═══════════════════════════════════════════════════════════════════
---  COMPONENT LIBRARY - Hazır Bileşenler
--- ═══════════════════════════════════════════════════════════════════
+    -- ── Minimize / Close / Keybind ─────────────────────────────────
+    local minimized    = false
+    local expandedSize = main.Size
 
-function VortexEngine:Button(config)
-	config = config or {}
-	
-	local button = self:CreateShape({
-		Type = "TextButton",
-		Name = config.Name or "Button",
-		Size = config.Size or UDim2.new(0, 150, 0, 40),
-		Position = config.Position or UDim2.new(0, 0, 0, 0),
-		Color = config.Color or Color3.fromRGB(60, 60, 60),
-		Text = config.Text or "Button",
-		TextColor = config.TextColor or Color3.fromRGB(255, 255, 255),
-		TextSize = config.TextSize or 14,
-		Font = config.Font or Enum.Font.GothamBold,
-		Corner = config.Corner or {Scale = 0, Offset = 8},
-		Stroke = config.Stroke,
-		Gradient = config.Gradient,
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	self:MakeInteractive(button, {
-		HoverEffect = {
-			Scale = 1.05,
-			Color = config.HoverColor or Color3.fromRGB(80, 80, 80),
-			OriginalColor = config.Color or Color3.fromRGB(60, 60, 60)
-		},
-		ClickEffect = {
-			Flash = config.ClickColor or Color3.fromRGB(120, 120, 120),
-			Ripple = config.RippleColor or Color3.fromRGB(255, 255, 255)
-		},
-		OnClick = config.OnClick
-	})
-	
-	return button
-end
+    local function doMinimize()
+        minimized = true
+        easeTween(main, 0.25, {Size=UDim2.new(0,0,0,H), BackgroundTransparency=0.8})
+        task.delay(0.27, function()
+            pcall(function()
+                main.Visible = false
+                main.Size = expandedSize
+                main.BackgroundTransparency = 0.2
+            end)
+        end)
+    end
 
-function VortexEngine:Toggle(config)
-	config = config or {}
-	
-	local container = self:CreateShape({
-		Type = "Frame",
-		Name = config.Name or "Toggle",
-		Size = config.Size or UDim2.new(0, 200, 0, 40),
-		Position = config.Position or UDim2.new(0, 0, 0, 0),
-		Color = config.BackgroundColor or Color3.fromRGB(40, 40, 40),
-		Corner = {Scale = 0, Offset = 8},
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	local label = self:CreateShape({
-		Type = "TextLabel",
-		Size = UDim2.new(1, -60, 1, 0),
-		Position = UDim2.new(0, 10, 0, 0),
-		Color = Color3.fromRGB(40, 40, 40),
-		Transparency = 1,
-		Text = config.Text or "Toggle",
-		TextColor = config.TextColor or Color3.fromRGB(255, 255, 255),
-		TextSize = config.TextSize or 13,
-		TextXAlign = Enum.TextXAlignment.Left,
-		Parent = container.Instance
-	})
-	
-	local track = self:CreateShape({
-		Type = "Frame",
-		Size = UDim2.new(0, 40, 0, 20),
-		Position = UDim2.new(1, -45, 0.5, -10),
-		Color = config.OffColor or Color3.fromRGB(60, 60, 60),
-		Corner = {Scale = 1, Offset = 0},
-		Parent = container.Instance
-	})
-	
-	local knob = self:CreateShape({
-		Type = "Frame",
-		Size = UDim2.new(0, 16, 0, 16),
-		Position = UDim2.new(0, 2, 0.5, -8),
-		Color = Color3.fromRGB(255, 255, 255),
-		Corner = {Scale = 1, Offset = 0},
-		Parent = track.Instance
-	})
-	
-	local toggled = config.Default or false
-	
-	if toggled then
-		track.Instance.BackgroundColor3 = config.OnColor or Color3.fromRGB(100, 200, 100)
-		knob.Instance.Position = UDim2.new(1, -18, 0.5, -8)
-	end
-	
-	local toggleObj = {
-		Container = container,
-		Value = toggled,
-		OnChange = config.OnChange
-	}
-	
-	function toggleObj:Set(value)
-		self.Value = value
-		if value then
-			VortexEngine:Animate(track.Instance, {BackgroundColor3 = config.OnColor or Color3.fromRGB(100, 200, 100)}, 0.2)
-			VortexEngine:Animate(knob.Instance, {Position = UDim2.new(1, -18, 0.5, -8)}, 0.2)
-		else
-			VortexEngine:Animate(track.Instance, {BackgroundColor3 = config.OffColor or Color3.fromRGB(60, 60, 60)}, 0.2)
-			VortexEngine:Animate(knob.Instance, {Position = UDim2.new(0, 2, 0.5, -8)}, 0.2)
-		end
-		if self.OnChange then
-			pcall(function() self.OnChange(value) end)
-		end
-	end
-	
-	self:MakeInteractive(container, {
-		OnClick = function()
-			toggleObj:Set(not toggleObj.Value)
-		end
-	})
-	
-	return toggleObj
-end
+    local function doExpand()
+        minimized = false
+        main.Size = UDim2.new(0,0,0,H)
+        main.BackgroundTransparency = 0.8
+        main.Visible = true
+        easeTween(main, 0.3, {Size=expandedSize, BackgroundTransparency=0.2})
+    end
 
-function VortexEngine:Slider(config)
-	config = config or {}
-	
-	local container = self:CreateShape({
-		Type = "Frame",
-		Name = config.Name or "Slider",
-		Size = config.Size or UDim2.new(0, 250, 0, 50),
-		Position = config.Position or UDim2.new(0, 0, 0, 0),
-		Color = config.BackgroundColor or Color3.fromRGB(40, 40, 40),
-		Corner = {Scale = 0, Offset = 8},
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	local label = self:CreateShape({
-		Type = "TextLabel",
-		Size = UDim2.new(0.7, 0, 0, 18),
-		Position = UDim2.new(0, 10, 0, 6),
-		Color = Color3.fromRGB(40, 40, 40),
-		Transparency = 1,
-		Text = config.Text or "Slider",
-		TextColor = config.TextColor or Color3.fromRGB(255, 255, 255),
-		TextSize = 12,
-		TextXAlign = Enum.TextXAlignment.Left,
-		Parent = container.Instance
-	})
-	
-	local min = config.Min or 0
-	local max = config.Max or 100
-	local value = config.Default or min
-	
-	local valueLabel = self:CreateShape({
-		Type = "TextLabel",
-		Size = UDim2.new(0.3, -10, 0, 18),
-		Position = UDim2.new(0.7, 0, 0, 6),
-		Color = Color3.fromRGB(40, 40, 40),
-		Transparency = 1,
-		Text = tostring(value),
-		TextColor = config.AccentColor or Color3.fromRGB(100, 200, 255),
-		TextSize = 12,
-		Font = Enum.Font.GothamBold,
-		TextXAlign = Enum.TextXAlignment.Right,
-		Parent = container.Instance
-	})
-	
-	local trackBg = self:CreateShape({
-		Type = "Frame",
-		Size = UDim2.new(1, -20, 0, 6),
-		Position = UDim2.new(0, 10, 1, -14),
-		Color = Color3.fromRGB(30, 30, 30),
-		Corner = {Scale = 1, Offset = 0},
-		Parent = container.Instance
-	})
-	
-	local fill = self:CreateShape({
-		Type = "Frame",
-		Size = UDim2.new((value - min) / (max - min), 0, 1, 0),
-		Color = config.AccentColor or Color3.fromRGB(100, 200, 255),
-		Corner = {Scale = 1, Offset = 0},
-		Parent = trackBg.Instance
-	})
-	
-	local knob = self:CreateShape({
-		Type = "Frame",
-		Size = UDim2.new(0, 12, 0, 12),
-		Position = UDim2.new((value - min) / (max - min), -6, 0.5, -6),
-		Color = Color3.fromRGB(255, 255, 255),
-		Corner = {Scale = 1, Offset = 0},
-		Parent = trackBg.Instance
-	})
-	
-	local dragging = false
-	
-	local sliderObj = {
-		Container = container,
-		Value = value,
-		OnChange = config.OnChange
-	}
-	
-	function sliderObj:Set(val)
-		val = math.clamp(val, min, max)
-		self.Value = val
-		valueLabel.Instance.Text = tostring(math.floor(val))
-		local relative = (val - min) / (max - min)
-		fill.Instance.Size = UDim2.new(relative, 0, 1, 0)
-		knob.Instance.Position = UDim2.new(relative, -6, 0.5, -6)
-		if self.OnChange then
-			pcall(function() self.OnChange(val) end)
-		end
-	end
-	
-	local button = Instance.new("TextButton")
-	button.Size = UDim2.new(1, 0, 1, 0)
-	button.BackgroundTransparency = 1
-	button.Text = ""
-	button.Parent = container.Instance
-	
-	button.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-		end
-	end)
-	
-	UserInputService.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = false
-		end
-	end)
-	
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local mousePos = UserInputService:GetMouseLocation().X
-			local trackPos = trackBg.Instance.AbsolutePosition.X
-			local trackSize = trackBg.Instance.AbsoluteSize.X
-			local relative = math.clamp((mousePos - trackPos) / trackSize, 0, 1)
-			local newValue = min + (relative * (max - min))
-			sliderObj:Set(newValue)
-		end
-	end)
-	
-	return sliderObj
-end
+    minBtn.MouseButton1Click:Connect(function()
+        if minimized then doExpand() else doMinimize() end
+    end)
+    closeBtn.MouseButton1Click:Connect(function()
+        main:Destroy(); sg:Destroy()
+    end)
+    UIS.InputBegan:Connect(function(inp, gpe)
+        if gpe then return end
+        if inp.KeyCode == toggleKey then
+            if minimized then doExpand() else doMinimize() end
+        end
+    end)
 
-function VortexEngine:Input(config)
-	config = config or {}
-	
-	local container = self:CreateShape({
-		Type = "Frame",
-		Name = config.Name or "Input",
-		Size = config.Size or UDim2.new(0, 250, 0, 40),
-		Position = config.Position or UDim2.new(0, 0, 0, 0),
-		Color = config.BackgroundColor or Color3.fromRGB(40, 40, 40),
-		Corner = {Scale = 0, Offset = 8},
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	local textBox = self:CreateShape({
-		Type = "TextBox",
-		Size = UDim2.new(1, -20, 1, -10),
-		Position = UDim2.new(0, 10, 0, 5),
-		Color = Color3.fromRGB(40, 40, 40),
-		Transparency = 1,
-		Text = config.Default or "",
-		TextColor = config.TextColor or Color3.fromRGB(255, 255, 255),
-		TextSize = config.TextSize or 13,
-		TextXAlign = Enum.TextXAlignment.Left,
-		Parent = container.Instance
-	})
-	
-	textBox.Instance.PlaceholderText = config.Placeholder or "Enter text..."
-	textBox.Instance.PlaceholderColor3 = config.PlaceholderColor or Color3.fromRGB(150, 150, 150)
-	textBox.Instance.ClearTextOnFocus = config.ClearOnFocus or false
-	
-	if config.OnChange then
-		textBox.Instance:GetPropertyChangedSignal("Text"):Connect(function()
-			pcall(function() config.OnChange(textBox.Instance.Text) end)
-		end)
-	end
-	
-	if config.OnSubmit then
-		textBox.Instance.FocusLost:Connect(function(enterPressed)
-			if enterPressed then
-				pcall(function() config.OnSubmit(textBox.Instance.Text) end)
-			end
-		end)
-	end
-	
-	return {Container = container, TextBox = textBox}
-end
+    -- ── Window object ──────────────────────────────────────────────
+    local win = {}
+    win._sg         = sg
+    win._main       = main
+    win._topbar     = topbar
+    win._sidebar    = sidebar
+    win._scroll     = scroll
+    win._C          = C
+    win._tabs       = {}
+    win._pages      = {}
+    win._current    = 1
+    win._setGlass   = setGlass
 
-function VortexEngine:Image(config)
-	config = config or {}
-	
-	local image = self:CreateShape({
-		Type = "ImageLabel",
-		Name = config.Name or "Image",
-		Size = config.Size or UDim2.new(0, 100, 0, 100),
-		Position = config.Position or UDim2.new(0, 0, 0, 0),
-		Color = config.Color or Color3.fromRGB(255, 255, 255),
-		Transparency = config.Transparency or 0,
-		Image = config.Image or "",
-		ImageColor = config.ImageColor,
-		ImageTransparency = config.ImageTransparency,
-		ScaleType = config.ScaleType,
-		Corner = config.Corner,
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	return image
-end
+    -- SetTitle
+    function win:SetTitle(t) logoLbl.Text = t end
 
--- ═══════════════════════════════════════════════════════════════════
---  ADVANCED SHAPES - Özel Şekiller
--- ═══════════════════════════════════════════════════════════════════
+    -- SetGlass (0 = opaque, 1 = fully transparent)
+    function win:SetGlass(s) setGlass(s) end
 
-function VortexEngine:Circle(config)
-	config = config or {}
-	config.Corner = {Scale = 1, Offset = 0}
-	return self:CreateShape(config)
-end
+    -- Destroy
+    function win:Destroy() main:Destroy(); sg:Destroy() end
 
-function VortexEngine:Ring(config)
-	config = config or {}
-	
-	local outer = self:Circle({
-		Size = config.Size or UDim2.new(0, 100, 0, 100),
-		Position = config.Position or UDim2.new(0, 0, 0, 0),
-		Color = config.Color or Color3.fromRGB(255, 255, 255),
-		Transparency = config.Transparency or 0,
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	local thickness = config.Thickness or 10
-	local innerSize = outer.Instance.AbsoluteSize.X - (thickness * 2)
-	
-	local inner = self:Circle({
-		Size = UDim2.new(0, innerSize, 0, innerSize),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Color = config.InnerColor or Color3.fromRGB(0, 0, 0),
-		Transparency = config.InnerTransparency or 0,
-		Parent = outer.Instance
-	})
-	
-	return {Outer = outer, Inner = inner}
-end
+    -- ── AddTab ────────────────────────────────────────────────────
+    function win:AddTab(name)
+        local C2  = self._C
+        local idx = #self._tabs + 1
 
-function VortexEngine:Triangle(config)
-	config = config or {}
-	
-	local container = self:CreateShape({
-		Type = "Frame",
-		Size = config.Size or UDim2.new(0, 100, 0, 100),
-		Position = config.Position or UDim2.new(0, 0, 0, 0),
-		Transparency = 1,
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	local image = self:CreateShape({
-		Type = "ImageLabel",
-		Size = UDim2.new(1, 0, 1, 0),
-		Image = "rbxassetid://6977053839",
-		ImageColor = config.Color or Color3.fromRGB(255, 255, 255),
-		ImageTransparency = config.Transparency or 0,
-		Rotation = config.Rotation or 0,
-		Parent = container.Instance
-	})
-	
-	return container
-end
+        -- Tab button
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 62, 0, 42)
+        btn.BackgroundColor3 = C2.Accent
+        btn.BackgroundTransparency = idx == 1 and 0.15 or 0.55
+        btn.Text = name; btn.TextSize = 13; btn.TextColor3 = Color3.new(1,1,1)
+        btn.Font = Enum.Font.GothamBold; btn.AutoButtonColor = false
+        btn.BorderSizePixel = 0; btn.LayoutOrder = idx; btn.Parent = self._sidebar
+        corner(10, btn)
+        local bstk = Instance.new("UIStroke")
+        bstk.Color = Color3.new(0,0,0); bstk.Thickness = 1.5
+        bstk.Transparency = idx==1 and 0.3 or 1; bstk.Enabled = (idx==1)
+        bstk.Parent = btn
 
-function VortexEngine:Polygon(config)
-	config = config or {}
-	
-	local sides = config.Sides or 6
-	local radius = config.Radius or 50
-	local center = config.Position or UDim2.new(0, 100, 0, 100)
-	local color = config.Color or Color3.fromRGB(255, 255, 255)
-	local parent = config.Parent or self.ScreenGui
-	
-	local container = self:CreateShape({
-		Type = "Frame",
-		Size = UDim2.new(0, radius * 2, 0, radius * 2),
-		Position = center,
-		Transparency = 1,
-		Parent = parent
-	})
-	
-	for i = 1, sides do
-		local angle = (i / sides) * math.pi * 2
-		local x = math.cos(angle) * radius
-		local y = math.sin(angle) * radius
-		
-		local point = self:CreateShape({
-			Type = "Frame",
-			Size = UDim2.new(0, 8, 0, 8),
-			Position = UDim2.new(0.5, x - 4, 0.5, y - 4),
-			Color = color,
-			Corner = {Scale = 1, Offset = 0},
-			Parent = container.Instance
-		})
-	end
-	
-	return container
-end
+        -- Tab page
+        local page = newFrame(self._scroll, UDim2.new(1,-12,0,0), UDim2.new(0,0,0,0))
+        page.Name = "Page_"..name
+        page.AutomaticSize = Enum.AutomaticSize.Y
+        page.Visible = (idx == 1)
+        local pl = Instance.new("UIListLayout")
+        pl.Padding = UDim.new(0, 10)
+        pl.SortOrder = Enum.SortOrder.LayoutOrder
+        pl.Parent = page
 
-function VortexEngine:Star(config)
-	config = config or {}
-	
-	local container = self:CreateShape({
-		Type = "Frame",
-		Size = config.Size or UDim2.new(0, 100, 0, 100),
-		Position = config.Position or UDim2.new(0, 0, 0, 0),
-		Transparency = 1,
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	local image = self:CreateShape({
-		Type = "ImageLabel",
-		Size = UDim2.new(1, 0, 1, 0),
-		Image = "rbxassetid://6031097225",
-		ImageColor = config.Color or Color3.fromRGB(255, 255, 0),
-		ImageTransparency = config.Transparency or 0,
-		Parent = container.Instance
-	})
-	
-	return container
-end
+        table.insert(self._tabs, btn)
+        table.insert(self._pages, page)
 
--- ═══════════════════════════════════════════════════════════════════
---  DRAWING SYSTEM - Serbest Çizim
--- ═══════════════════════════════════════════════════════════════════
+        -- Switch tab
+        btn.MouseButton1Click:Connect(function()
+            if self._current == idx then return end
+            for j, b in ipairs(self._tabs) do
+                local on = (j == idx)
+                easeTween(b, 0.15, {BackgroundTransparency = on and 0.15 or 0.55})
+                local s = b:FindFirstChildOfClass("UIStroke")
+                if s then s.Enabled = on; s.Transparency = on and 0.3 or 1 end
+                self._pages[j].Visible = on
+            end
+            self._current = idx
+        end)
+        btn.MouseEnter:Connect(function()
+            if self._current ~= idx then easeTween(btn,0.1,{BackgroundTransparency=0.35}) end
+        end)
+        btn.MouseLeave:Connect(function()
+            if self._current ~= idx then easeTween(btn,0.1,{BackgroundTransparency=0.55}) end
+        end)
 
-function VortexEngine:DrawLine(from, to, config)
-	config = config or {}
-	
-	local distance = (to - from).Magnitude
-	local midpoint = (from + to) / 2
-	local angle = math.deg(math.atan2(to.Y - from.Y, to.X - from.X))
-	
-	local line = self:CreateShape({
-		Type = "Frame",
-		Size = UDim2.new(0, distance, 0, config.Thickness or 2),
-		Position = UDim2.new(0, midpoint.X, 0, midpoint.Y),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Color = config.Color or Color3.fromRGB(255, 255, 255),
-		Rotation = angle,
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	return line
-end
+        -- ── Tab component API ───────────────────────────────────
+        local tab  = {}
+        local lo   = 0
+        local function nextLo() lo = lo + 1; return lo end
 
-function VortexEngine:DrawPath(points, config)
-	config = config or {}
-	local lines = {}
-	
-	for i = 1, #points - 1 do
-		local line = self:DrawLine(points[i], points[i + 1], config)
-		table.insert(lines, line)
-	end
-	
-	if config.ClosePath then
-		local line = self:DrawLine(points[#points], points[1], config)
-		table.insert(lines, line)
-	end
-	
-	return lines
-end
+        local function makeRow(text, desc)
+            local row = newFrame(page,
+                UDim2.new(1,0,0,desc and 54 or 40),
+                nil, C2.BG, 0.65)
+            row.LayoutOrder = nextLo()
+            corner(10, row)
+            uistroke(C2.Divider, 1, 0.5, row)
+            local lbl = newText("TextLabel", row, text, 14, C2.Text, Enum.Font.GothamMedium)
+            lbl.Size = UDim2.new(1,-20,0,20)
+            lbl.Position = UDim2.new(0,12,0,10)
+            if desc then
+                local dl = newText("TextLabel", row, desc, 12, C2.TextMuted)
+                dl.Size = UDim2.new(1,-20,0,16)
+                dl.Position = UDim2.new(0,12,0,30)
+            end
+            return row
+        end
 
-function VortexEngine:DrawGrid(config)
-	config = config or {}
-	
-	local container = self:CreateShape({
-		Type = "Frame",
-		Size = config.Size or UDim2.new(1, 0, 1, 0),
-		Position = config.Position or UDim2.new(0, 0, 0, 0),
-		Transparency = 1,
-		Parent = config.Parent or self.ScreenGui
-	})
-	
-	local cellSize = config.CellSize or 50
-	local color = config.Color or Color3.fromRGB(100, 100, 100)
-	local thickness = config.Thickness or 1
-	
-	local width = container.Instance.AbsoluteSize.X
-	local height = container.Instance.AbsoluteSize.Y
-	
-	for x = 0, width, cellSize do
-		self:CreateShape({
-			Type = "Frame",
-			Size = UDim2.new(0, thickness, 1, 0),
-			Position = UDim2.new(0, x, 0, 0),
-			Color = color,
-			Parent = container.Instance
-		})
-	end
-	
-	for y = 0, height, cellSize do
-		self:CreateShape({
-			Type = "Frame",
-			Size = UDim2.new(1, 0, 0, thickness),
-			Position = UDim2.new(0, 0, 0, y),
-			Color = color,
-			Parent = container.Instance
-		})
-	end
-	
-	return container
-end
+        -- Header ──────────────────────────────────────────────────
+        function tab:Header(htitle, hsubtitle)
+            local h = newFrame(page, UDim2.new(1,0,0,0))
+            h.AutomaticSize = Enum.AutomaticSize.Y
+            h.LayoutOrder = nextLo()
+            local t2 = newText("TextLabel", h, htitle, 17, C2.Text, Enum.Font.GothamBold)
+            t2.Size = UDim2.new(1,0,0,22)
+            if hsubtitle then
+                local s2 = newText("TextLabel", h, hsubtitle, 13, C2.TextMuted)
+                s2.Size = UDim2.new(1,0,0,36); s2.Position = UDim2.new(0,0,0,24)
+                s2.TextYAlignment = Enum.TextYAlignment.Top; s2.TextWrapped = true
+            end
+        end
 
--- ═══════════════════════════════════════════════════════════════════
---  3D DEPTH SYSTEM - Derinlik İllüzyonu
--- ═══════════════════════════════════════════════════════════════════
+        -- Section label ───────────────────────────────────────────
+        function tab:Section(text)
+            local lo2 = nextLo()
+            local sb = Instance.new("TextButton")
+            sb.Size = UDim2.new(1,0,0,20); sb.BackgroundTransparency = 1
+            sb.Text = "▼  "..text; sb.TextColor3 = C2.TextMuted
+            sb.Font = Enum.Font.GothamBold; sb.TextSize = 10
+            sb.TextXAlignment = Enum.TextXAlignment.Left
+            sb.LayoutOrder = lo2; sb.AutoButtonColor = false
+            sb.BorderSizePixel = 0; sb:SetAttribute("_sec", true); sb.Parent = page
+            sb.MouseEnter:Connect(function() sb.TextColor3 = C2.Text end)
+            sb.MouseLeave:Connect(function() sb.TextColor3 = C2.TextMuted end)
+            local collapsed = false
+            sb.MouseButton1Click:Connect(function()
+                collapsed = not collapsed
+                sb.Text = (collapsed and "►  " or "▼  ")..text
+                local nextSecLo = math.huge
+                for _, c in ipairs(page:GetChildren()) do
+                    if c:IsA("GuiObject") and c:GetAttribute("_sec") and c.LayoutOrder > lo2 and c.LayoutOrder < nextSecLo then
+                        nextSecLo = c.LayoutOrder
+                    end
+                end
+                for _, c in ipairs(page:GetChildren()) do
+                    if c:IsA("GuiObject") then
+                        local clo = c.LayoutOrder
+                        if clo > lo2 and clo < nextSecLo then
+                            c.Visible = not collapsed
+                        end
+                    end
+                end
+            end)
+            return sb
+        end
 
-function VortexEngine:Create3DLayer(config)
-	config = config or {}
-	
-	local layers = {}
-	local depth = config.Depth or 5
-	
-	for i = 1, depth do
-		local scale = 1 - (i * 0.05)
-		local transparency = (i - 1) * 0.15
-		
-		local layer = self:CreateShape({
-			Type = config.Type or "Frame",
-			Size = (config.Size or UDim2.new(0, 200, 0, 200)) * scale,
-			Position = config.Position or UDim2.new(0.5, 0, 0.5, 0),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Color = config.Color or Color3.fromRGB(100, 100, 255),
-			Transparency = transparency,
-			ZIndex = depth - i,
-			Corner = config.Corner,
-			Parent = config.Parent or self.ScreenGui
-		})
-		
-		table.insert(layers, layer)
-	end
-	
-	return layers
-end
+        -- Toggle ──────────────────────────────────────────────────
+        function tab:Toggle(text, desc_or_def, def_or_cb, cb_opt)
+            local desc, default, cb
+            if type(desc_or_def) == "string" then
+                desc = desc_or_def; default = def_or_cb; cb = cb_opt
+            else
+                desc = nil; default = desc_or_def; cb = def_or_cb
+            end
+            default = default or false
+            local row = makeRow(text, desc)
+            local sw  = Instance.new("TextButton")
+            sw.Size = UDim2.new(0,48,0,26); sw.Position = UDim2.new(1,-58,0.5,-13)
+            sw.BackgroundColor3 = C2.Accent; sw.BorderSizePixel = 0
+            sw.Text = ""; sw.AutoButtonColor = false; sw.Parent = row; corner(13, sw)
+            local knob = newFrame(sw, UDim2.fromOffset(20,20), nil, C2.Text, 0)
+            corner(10, knob)
+            local on = default
+            local function paint(tween)
+                local targetPos = on and UDim2.new(1,-23,0.5,-10) or UDim2.new(0,4,0.5,-10)
+                local targetCol = on and C2.Neon or C2.Accent
+                if tween then
+                    easeTween(sw, 0.2, {BackgroundColor3 = targetCol})
+                    easeTween(knob, 0.2, {Position = targetPos})
+                else
+                    sw.BackgroundColor3 = targetCol; knob.Position = targetPos
+                end
+            end
+            paint(false)
+            sw.MouseButton1Click:Connect(function()
+                on = not on; paint(true); if cb then cb(on) end
+            end)
+            return {
+                Get = function() return on end,
+                Set = function(v) on = v; paint(true); if cb then cb(v) end end,
+            }
+        end
 
-function VortexEngine:CreateParallax(elements, intensity)
-	intensity = intensity or 0.1
-	
-	local mouse = Players.LocalPlayer:GetMouse()
-	
-	RunService.RenderStepped:Connect(function()
-		local mouseX = mouse.X
-		local mouseY = mouse.Y
-		local screenX = workspace.CurrentCamera.ViewportSize.X / 2
-		local screenY = workspace.CurrentCamera.ViewportSize.Y / 2
-		
-		local offsetX = (mouseX - screenX) * intensity
-		local offsetY = (mouseY - screenY) * intensity
-		
-		for i, element in ipairs(elements) do
-			local instance = type(element) == "table" and element.Instance or element
-			local depth = i * 0.2
-			
-			self:Animate(instance, {
-				Position = UDim2.new(
-					instance.Position.X.Scale,
-					instance.Position.X.Offset + (offsetX * depth),
-					instance.Position.Y.Scale,
-					instance.Position.Y.Offset + (offsetY * depth)
-				)
-			}, 0.1, Enum.EasingStyle.Linear)
-		end
-	end)
-end
+        -- Button ──────────────────────────────────────────────────
+        function tab:Button(text, desc_or_cb, cb_opt)
+            local desc, cb
+            if type(desc_or_cb) == "string" then desc = desc_or_cb; cb = cb_opt
+            else cb = desc_or_cb end
+            local row = makeRow(text, desc)
+            local b   = Instance.new("TextButton")
+            b.Size = UDim2.new(0,80,0,26); b.Position = UDim2.new(1,-90,0.5,-13)
+            b.BackgroundColor3 = C2.Accent; b.BackgroundTransparency = 0.3
+            b.Text = "Run"; b.TextColor3 = C2.Text; b.TextSize = 12
+            b.Font = Enum.Font.GothamMedium; b.AutoButtonColor = false
+            b.BorderSizePixel = 0; b.Parent = row; corner(8, b)
+            b.MouseButton1Click:Connect(function() if cb then cb() end end)
+            b.MouseEnter:Connect(function() easeTween(b,0.1,{BackgroundTransparency=0.08}) end)
+            b.MouseLeave:Connect(function() easeTween(b,0.1,{BackgroundTransparency=0.3}) end)
+            return b
+        end
 
--- ═══════════════════════════════════════════════════════════════════
---  UTILITY FUNCTIONS - Yardımcı Fonksiyonlar
--- ═══════════════════════════════════════════════════════════════════
+        -- Slider ──────────────────────────────────────────────────
+        function tab:Slider(text, sopts, cb)
+            local mn  = sopts.Min or 0
+            local mx  = sopts.Max or 100
+            local def = sopts.Default or mn
+            local rnd = sopts.Round ~= false
+            local desc = sopts.Desc or ("Default: "..tostring(def))
+            local row = makeRow(text, desc)
+            row.Size = UDim2.new(1,0,0,66)
+            local valLbl = newText("TextLabel", row, tostring(def), 12, C2.Neon, Enum.Font.GothamBold,
+                Enum.TextXAlignment.Right)
+            valLbl.Size = UDim2.new(0,44,0,18); valLbl.Position = UDim2.new(1,-54,0,8)
+            local bg = newFrame(row, UDim2.new(1,-24,0,6), UDim2.new(0,12,0,50), C2.Divider, 0)
+            corner(3, bg)
+            local fill = newFrame(bg, UDim2.new(0,0,1,0), nil, C2.Accent, 0)
+            corner(3, fill)
+            local knob2 = Instance.new("TextButton")
+            knob2.Size = UDim2.new(0,14,0,14); knob2.BackgroundColor3 = C2.Neon
+            knob2.Text = ""; knob2.AutoButtonColor = false; knob2.BorderSizePixel = 0
+            knob2.Parent = bg; corner(7, knob2)
+            local range = (mx == mn) and 1 or (mx - mn)
+            local val   = def
+            local function applyT(t)
+                t = math.clamp(t,0,1)
+                local raw = mn + t*range
+                val = rnd and math.floor(raw+0.5) or raw
+                fill.Size = UDim2.new(t,0,1,0)
+                knob2.Position = UDim2.new(t,-7,0.5,-7)
+                valLbl.Text = tostring(val)
+                if cb then cb(val) end
+            end
+            local t0 = math.clamp((def-mn)/range,0,1)
+            fill.Size = UDim2.new(t0,0,1,0); knob2.Position = UDim2.new(t0,-7,0.5,-7)
+            local dragging = false
+            knob2.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+            end)
+            UIS.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+            end)
+            UIS.InputChanged:Connect(function(inp)
+                if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                    local a = bg.AbsolutePosition; local sz = math.max(bg.AbsoluteSize.X,1)
+                    applyT((inp.Position.X - a.X)/sz)
+                end
+            end)
+            return {
+                Get = function() return val end,
+                Set = function(v) applyT(math.clamp((v-mn)/range,0,1)) end,
+            }
+        end
 
-function VortexEngine:Clone(element)
-	local instance = type(element) == "table" and element.Instance or element
-	local clone = instance:Clone()
-	clone.Parent = instance.Parent
-	return {Instance = clone, Config = element.Config or {}}
-end
+        -- Dropdown ────────────────────────────────────────────────
+        function tab:Dropdown(text, options, cb)
+            local row = makeRow(text)
+            local cur = options[1] or "---"
+            local idx2 = 1
+            local dBtn = Instance.new("TextButton")
+            dBtn.Size = UDim2.new(0,120,0,26); dBtn.Position = UDim2.new(1,-130,0.5,-13)
+            dBtn.BackgroundColor3 = C2.Accent; dBtn.BackgroundTransparency = 0.3
+            dBtn.Text = cur; dBtn.TextColor3 = C2.Text; dBtn.TextSize = 12
+            dBtn.Font = Enum.Font.GothamMedium; dBtn.AutoButtonColor = false
+            dBtn.BorderSizePixel = 0; dBtn.Parent = row; corner(8, dBtn)
+            uistroke(C2.Divider, 1, 0.4, dBtn)
+            dBtn.MouseButton1Click:Connect(function()
+                idx2 = (idx2 % #options) + 1
+                cur = options[idx2]; dBtn.Text = cur
+                if cb then cb(cur) end
+            end)
+            dBtn.MouseEnter:Connect(function() easeTween(dBtn,0.1,{BackgroundTransparency=0.1}) end)
+            dBtn.MouseLeave:Connect(function() easeTween(dBtn,0.1,{BackgroundTransparency=0.3}) end)
+            return {
+                Get = function() return cur end,
+                Set = function(v)
+                    for j,o in ipairs(options) do
+                        if o==v then idx2=j; cur=v; dBtn.Text=v; if cb then cb(v) end; break end
+                    end
+                end,
+                Options = options,
+            }
+        end
 
-function VortexEngine:Destroy(element)
-	local instance = type(element) == "table" and element.Instance or element
-	if instance then
-		instance:Destroy()
-	end
-end
+        -- Input ───────────────────────────────────────────────────
+        function tab:Input(text, placeholder, cb)
+            local row = makeRow(text)
+            local box = Instance.new("TextBox")
+            box.Size = UDim2.new(0,140,0,26); box.Position = UDim2.new(1,-150,0.5,-13)
+            box.BackgroundColor3 = C2.BG; box.BackgroundTransparency = 0.3
+            box.Text = ""; box.PlaceholderText = placeholder or "Enter value..."
+            box.TextColor3 = C2.Text; box.PlaceholderColor3 = C2.TextMuted
+            box.TextSize = 12; box.Font = Enum.Font.GothamMedium
+            box.ClearTextOnFocus = false; box.BorderSizePixel = 0; box.Parent = row
+            corner(8, box); uistroke(C2.Divider, 1, 0.4, box)
+            box.FocusLost:Connect(function(enter)
+                if enter and cb then cb(box.Text) end
+            end)
+            return {
+                Get = function() return box.Text end,
+                Set = function(v) box.Text = v end,
+            }
+        end
 
-function VortexEngine:Hide(element, animated)
-	local instance = type(element) == "table" and element.Instance or element
-	if animated then
-		self:FadeOut(instance, 0.3)
-		task.wait(0.3)
-	end
-	instance.Visible = false
-end
+        -- Label ───────────────────────────────────────────────────
+        function tab:Label(text, color)
+            local lbl2 = newText("TextLabel", page, text, 13, color or C2.TextMuted)
+            lbl2.Size = UDim2.new(1,0,0,22)
+            lbl2.LayoutOrder = nextLo()
+            return { Set = function(t) lbl2.Text = t end }
+        end
 
-function VortexEngine:Show(element, animated)
-	local instance = type(element) == "table" and element.Instance or element
-	instance.Visible = true
-	if animated then
-		self:FadeIn(instance, 0.3)
-	end
-end
+        -- Separator ───────────────────────────────────────────────
+        function tab:Separator()
+            local sep = newFrame(page, UDim2.new(1,-12,0,1), UDim2.new(0,6,0,0), C2.Divider, 0.4)
+            sep.LayoutOrder = nextLo()
+        end
 
-function VortexEngine:SetZIndex(element, zIndex)
-	local instance = type(element) == "table" and element.Instance or element
-	instance.ZIndex = zIndex
-	for _, child in ipairs(instance:GetDescendants()) do
-		if child:IsA("GuiObject") then
-			child.ZIndex = zIndex
-		end
-	end
-end
+        return tab
+    end -- AddTab
 
-function VortexEngine:GetCenter(element)
-	local instance = type(element) == "table" and element.Instance or element
-	local pos = instance.AbsolutePosition
-	local size = instance.AbsoluteSize
-	return Vector2.new(pos.X + size.X / 2, pos.Y + size.Y / 2)
-end
+    return win
+end -- CreateWindow
 
-function VortexEngine:GetDistance(element1, element2)
-	local center1 = self:GetCenter(element1)
-	local center2 = self:GetCenter(element2)
-	return (center2 - center1).Magnitude
-end
-
-function VortexEngine:IsOverlapping(element1, element2)
-	local inst1 = type(element1) == "table" and element1.Instance or element1
-	local inst2 = type(element2) == "table" and element2.Instance or element2
-	
-	local pos1 = inst1.AbsolutePosition
-	local size1 = inst1.AbsoluteSize
-	local pos2 = inst2.AbsolutePosition
-	local size2 = inst2.AbsoluteSize
-	
-	return not (pos1.X + size1.X < pos2.X or pos2.X + size2.X < pos1.X or
-	            pos1.Y + size1.Y < pos2.Y or pos2.Y + size2.Y < pos1.Y)
-end
-
--- ═══════════════════════════════════════════════════════════════════
---  NOTIFICATION SYSTEM - Bildirim Sistemi
--- ═══════════════════════════════════════════════════════════════════
-
-function VortexEngine:Notify(config)
-	config = config or {}
-	
-	local notification = self:CreateShape({
-		Type = "Frame",
-		Size = UDim2.new(0, 300, 0, 80),
-		Position = UDim2.new(1, 10, 1, -90),
-		Color = config.BackgroundColor or Color3.fromRGB(30, 30, 30),
-		Corner = {Scale = 0, Offset = 10},
-		Stroke = {
-			Color = config.AccentColor or Color3.fromRGB(100, 200, 255),
-			Thickness = 2
-		},
-		Parent = self.ScreenGui
-	})
-	
-	local title = self:CreateShape({
-		Type = "TextLabel",
-		Size = UDim2.new(1, -20, 0, 20),
-		Position = UDim2.new(0, 10, 0, 10),
-		Transparency = 1,
-		Text = config.Title or "Notification",
-		TextColor = Color3.fromRGB(255, 255, 255),
-		TextSize = 14,
-		Font = Enum.Font.GothamBold,
-		TextXAlign = Enum.TextXAlignment.Left,
-		Parent = notification.Instance
-	})
-	
-	local message = self:CreateShape({
-		Type = "TextLabel",
-		Size = UDim2.new(1, -20, 0, 30),
-		Position = UDim2.new(0, 10, 0, 35),
-		Transparency = 1,
-		Text = config.Message or "",
-		TextColor = Color3.fromRGB(200, 200, 200),
-		TextSize = 12,
-		TextXAlign = Enum.TextXAlignment.Left,
-		TextYAlign = Enum.TextYAlignment.Top,
-		TextWrap = true,
-		Parent = notification.Instance
-	})
-	
-	self:Animate(notification.Instance, {Position = UDim2.new(1, -310, 1, -90)}, 0.3, Enum.EasingStyle.Back)
-	
-	local duration = config.Duration or 3
-	task.delay(duration, function()
-		self:Animate(notification.Instance, {Position = UDim2.new(1, 10, 1, -90)}, 0.3, Enum.EasingStyle.Back)
-		task.wait(0.3)
-		notification.Instance:Destroy()
-	end)
-	
-	return notification
-end
-
--- ═══════════════════════════════════════════════════════════════════
---  CLEANUP - Temizlik
--- ═══════════════════════════════════════════════════════════════════
-
-function VortexEngine:DestroyAll()
-	if self.ScreenGui then
-		self.ScreenGui:Destroy()
-	end
-	self.Elements = {}
-	self.Animations = {}
-end
-
-_G.VortexEngine = VortexEngine
-return VortexEngine
+return VortexLib
